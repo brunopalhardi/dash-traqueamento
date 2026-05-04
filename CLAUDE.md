@@ -50,7 +50,17 @@ Dashboard próprio de tráfego pago + vendas, inspirado no **VK Metrics** (vkmet
 - Spec do sub-projeto 1: [docs/superpowers/specs/2026-05-04-infra-schema-design.md](docs/superpowers/specs/2026-05-04-infra-schema-design.md)
 - Plano sub-projeto 1: [docs/superpowers/plans/2026-05-04-infra-schema.md](docs/superpowers/plans/2026-05-04-infra-schema.md)
 
-## Estado atual
+## Estado atual (2026-05-04)
 
-- Sub-projeto 1 (Infra + Schema): **em andamento — Task 1**
-- Próximos: Meta Ads API → Frontend dados reais → Hotmart webhook → Pixel orgânico
+- **Sub-projeto 1 (Infra + Schema): concluído** ✅
+  - Next.js 15 deployado em https://dash-traqueamento.vercel.app
+  - Login Supabase funcionando (`admin@traqueamento.com`)
+  - Schema completo: 10 tabelas + 2 views materializadas
+  - `/api/sync/refresh` agendado via Vercel Cron (1x/dia 02h SP) — registra ping em `sync_jobs`
+  - CI verde no GitHub
+  - **Decisão:** worker em VPS adiado (Tasks 10-12 do plano) — sync inline em Vercel Functions cobre o MVP
+- **Próximo: Sub-projeto 2 — Meta Ads API integration**
+  - Cliente Graph API + tela "Conectar conta Meta"
+  - Job `syncMeta` populando ad_accounts → campaigns → adsets → ads → creatives → ad_insights_daily
+  - Botão "Atualizar Tudo" + cron diário disparam o sync
+- Depois: Frontend com dados reais → Hotmart webhook → Pixel orgânico
