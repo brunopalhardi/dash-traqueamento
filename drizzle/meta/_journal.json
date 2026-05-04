@@ -8,6 +8,13 @@
       "when": 1777924509708,
       "tag": "0000_meta_hierarchy",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777924565556,
+      "tag": "0001_ad_insights_daily",
+      "breakpoints": true
     }
   ]
 }
