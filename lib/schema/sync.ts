@@ -7,6 +7,7 @@ import {
   pgEnum,
   integer,
   index,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { adAccounts } from "./meta";
 
@@ -39,6 +40,7 @@ export const syncJobs = pgTable(
     finishedAt: timestamp("finished_at", { withTimezone: true }),
     rowsProcessed: integer("rows_processed").default(0),
     errorMessage: text("error_message"),
+    details: jsonb("details").$type<Record<string, unknown>>(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

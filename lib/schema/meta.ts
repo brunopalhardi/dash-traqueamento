@@ -9,6 +9,7 @@ import {
   pgEnum,
   index,
   uniqueIndex,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -25,7 +26,8 @@ export const adAccounts = pgTable(
     id: bigserial("id", { mode: "number" }).primaryKey(),
     name: text("name").notNull(),
     metaAccountId: text("meta_account_id").notNull(),
-    accessTokenEncrypted: text("access_token_encrypted").notNull(),
+    accessTokenEncrypted: text("access_token_encrypted"),
+    isActive: boolean("is_active").notNull().default(false),
     currency: text("currency").notNull().default("BRL"),
     timezone: text("timezone").notNull().default("America/Sao_Paulo"),
     status: adAccountStatus("status").notNull().default("active"),
