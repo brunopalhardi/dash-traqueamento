@@ -119,7 +119,7 @@ export function createMetaClient(cfg: MetaClientConfig): MetaClient {
     getMe: () => request<MetaUser>("/me", { fields: "id,name" }),
     getAdAccounts: () =>
       paginate<MetaAdAccount>("/me/adaccounts", {
-        fields: "id,account_id,name,currency,timezone_name,account_status,business{id,name}",
+        fields: "id,account_id,name,currency,timezone_name,account_status",
         limit: "100",
       }),
     getCampaigns: (accountId) =>

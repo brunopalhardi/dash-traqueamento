@@ -17,12 +17,24 @@ export function AccountsTable() {
   const [accounts, setAccounts] = useState<AccountRow[] | null>(null);
   const [discovering, setDiscovering] = useState(false);
 
+  const [error, setError] = useState<string | null>(null);
+
   async function discover() {
     setDiscovering(true);
-    const res = await fetch("/api/meta/accounts/discover");
-    const data = await res.json();
-    setAccounts((data.accounts ?? []) as AccountRow[]);
-    setDiscovering(false);
+    setError(null);
+    try {
+      const res = await fetch("/api/meta/accounts/discover");
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`);
+      }
+      const data = await res.json();
+      setAccounts((data.accounts ?? []) as AccountRow[]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setDiscovering(false);
+    }
   }
 
   useEffect(() => {
@@ -55,6 +67,9 @@ export function AccountsTable() {
         </Button>
       </CardHeader>
       <CardContent>
+        {error ? (
+          <p className="text-sm text-destructive mb-2">Erro: {error}</p>
+        ) : null}
         {accounts === null ? (
           <p className="text-sm text-muted-foreground">Carregando…</p>
         ) : accounts.length === 0 ? (
