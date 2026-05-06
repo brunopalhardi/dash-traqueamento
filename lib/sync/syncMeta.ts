@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db as defaultDb } from "@/lib/db";
 import { adAccounts, campaigns, adsets, ads, creatives } from "@/lib/schema/meta";
 import { adInsightsDaily } from "@/lib/schema/insights";
@@ -173,22 +173,33 @@ export async function syncMeta(
       }
 
       // Ads
+      const accountCampaignIds = Array.from(campaignIdMap.values());
       const adsetIdMap = new Map<string, number>(
-        (
-          await db
-            .select({ id: adsets.id, metaId: adsets.metaId })
-            .from(adsets)
-        ).map((row) => [row.metaId, row.id]),
-      );
-      const creativeIdMap = new Map<string, number>(
-        (
-          await db
-            .select({ id: creatives.id, metaId: creatives.metaId })
-            .from(creatives)
-        ).map((row) => [row.metaId, row.id]),
+        accountCampaignIds.length === 0
+          ? []
+          : (
+              await db
+                .select({ id: adsets.id, metaId: adsets.metaId })
+                .from(adsets)
+                .where(inArray(adsets.campaignId, accountCampaignIds))
+            ).map((row) => [row.metaId, row.id]),
       );
 
       const apiAds = await opts.client.getAds(actId);
+
+      const referencedCreativeIds = apiAds
+        .map((a) => a.creative?.id)
+        .filter((id): id is string => typeof id === "string");
+      const creativeIdMap = new Map<string, number>(
+        referencedCreativeIds.length === 0
+          ? []
+          : (
+              await db
+                .select({ id: creatives.id, metaId: creatives.metaId })
+                .from(creatives)
+                .where(inArray(creatives.metaId, referencedCreativeIds))
+            ).map((row) => [row.metaId, row.id]),
+      );
       for (const a of apiAds) {
         const adsetDbId = adsetIdMap.get(a.adset_id);
         if (!adsetDbId) continue;
@@ -217,12 +228,16 @@ export async function syncMeta(
       }
 
       // Insights
+      const accountAdsetIds = Array.from(adsetIdMap.values());
       const adIdMap = new Map<string, number>(
-        (
-          await db
-            .select({ id: ads.id, metaId: ads.metaId })
-            .from(ads)
-        ).map((row) => [row.metaId, row.id]),
+        accountAdsetIds.length === 0
+          ? []
+          : (
+              await db
+                .select({ id: ads.id, metaId: ads.metaId })
+                .from(ads)
+                .where(inArray(ads.adsetId, accountAdsetIds))
+            ).map((row) => [row.metaId, row.id]),
       );
 
       const apiInsights = await opts.client.getInsights(actId, { datePreset: preset });
