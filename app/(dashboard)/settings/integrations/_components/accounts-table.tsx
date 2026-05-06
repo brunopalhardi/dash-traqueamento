@@ -27,7 +27,7 @@ export function AccountsTable() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/meta/accounts/discover")
+    fetch("/api/meta/accounts/list")
       .then((r) => r.json())
       .then((data) => {
         if (!cancelled) setAccounts((data.accounts ?? []) as AccountRow[]);
