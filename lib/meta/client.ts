@@ -115,12 +115,11 @@ export function createMetaClient(cfg: MetaClientConfig): MetaClient {
     return out;
   }
 
-  // Only sync currently active entities — historical PAUSED clutter (often
-  // hundreds of campaigns paused years ago) blows the Vercel function timeout.
-  // To inspect old/paused work, run scripts/backfill-meta.ts manually.
-  const ACTIVE_FILTER = JSON.stringify([
-    { field: "effective_status", operator: "IN", value: ["ACTIVE"] },
-  ]);
+  // Para campaigns/adsets/ads, o Meta exige o parâmetro nomeado
+  // `effective_status=["ACTIVE"]` — `filtering=[{field:effective_status...}]`
+  // é silenciosamente ignorado nesses endpoints e devolve tudo. Já no
+  // endpoint de insights o `filtering` com `ad.effective_status` funciona.
+  const STATUS_PARAM = JSON.stringify(["ACTIVE"]);
   const INSIGHTS_FILTER = JSON.stringify([
     { field: "ad.effective_status", operator: "IN", value: ["ACTIVE"] },
   ]);
@@ -135,19 +134,19 @@ export function createMetaClient(cfg: MetaClientConfig): MetaClient {
     getCampaigns: (accountId) =>
       paginate<MetaCampaign>(`/${accountId}/campaigns`, {
         fields: "id,name,objective,status,daily_budget,lifetime_budget,start_time,stop_time",
-        filtering: ACTIVE_FILTER,
+        effective_status: STATUS_PARAM,
         limit: "200",
       }),
     getAdSets: (accountId) =>
       paginate<MetaAdSet>(`/${accountId}/adsets`, {
         fields: "id,campaign_id,name,status,daily_budget,optimization_goal,targeting",
-        filtering: ACTIVE_FILTER,
+        effective_status: STATUS_PARAM,
         limit: "200",
       }),
     getAds: (accountId) =>
       paginate<MetaAd>(`/${accountId}/ads`, {
         fields: "id,adset_id,name,status,creative{id},preview_shareable_link",
-        filtering: ACTIVE_FILTER,
+        effective_status: STATUS_PARAM,
         limit: "200",
       }),
     getCreatives: (accountId) =>
