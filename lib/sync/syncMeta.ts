@@ -32,8 +32,19 @@ export type SyncMode = "backfill" | "daily" | "manual";
 
 const MODE_TO_PRESET: Record<SyncMode, DatePreset> = {
   backfill: "last_30d",
-  daily: "yesterday",
-  manual: "last_3d",
+  daily: "last_7d",
+  manual: "last_7d",
+};
+
+/**
+ * `getCreatives` retorna 1k+ thumbnails do account inteiro (sem filtro por
+ * status), o que dominava o tempo do sync no Vercel. Pulamos no daily/manual
+ * e só rodamos no backfill — thumbnails antigas ficam até o backfill rodar.
+ */
+const SYNC_CREATIVES: Record<SyncMode, boolean> = {
+  backfill: true,
+  daily: false,
+  manual: false,
 };
 
 interface AccountSyncResult {
@@ -63,27 +74,56 @@ function sumActions(actions: MetaInsight["actions"], match: (t: string) => boole
     .reduce((sum, a) => sum + Number(a.value || 0), 0);
 }
 
+/**
+ * O Meta Pixel reporta a mesma compra em vários `action_type` ao mesmo tempo
+ * (`purchase`, `offsite_conversion.fb_pixel_purchase`, `omni_purchase`,
+ * `web_in_store_purchase`, `onsite_web_purchase`...). Se somarmos tudo, a
+ * gente conta a venda 4x. A regra: pegar **um** representante por evento.
+ *
+ * Ordem de prioridade: omni_purchase → fb_pixel_purchase → onsite/web_purchase
+ * → purchase (last resort, costuma ser duplicata).
+ */
+function pickByPriority(
+  actions: MetaInsight["actions"],
+  matchers: Array<(t: string) => boolean>,
+): number {
+  if (!actions) return 0;
+  for (const match of matchers) {
+    const v = actions
+      .filter((a) => match(a.action_type))
+      .reduce((sum, a) => sum + Number(a.value || 0), 0);
+    if (v > 0) return v;
+  }
+  return 0;
+}
+
 function extractConversions(insight: MetaInsight): Record<string, number> {
   const isLead = (t: string) =>
-    t === "lead" || t.endsWith("_lead") || t === "onsite_conversion.lead_grouped";
-  const isPurchase = (t: string) =>
-    t === "purchase" ||
-    t === "omni_purchase" ||
-    t.endsWith("_purchase") ||
-    t === "offsite_conversion.fb_pixel_purchase";
+    t === "lead" ||
+    t.endsWith(".lead") ||
+    t === "onsite_conversion.lead_grouped" ||
+    t === "offsite_conversion.fb_pixel_lead";
+
+  const purchaseMatchers = [
+    (t: string) => t === "omni_purchase",
+    (t: string) => t === "offsite_conversion.fb_pixel_purchase",
+    (t: string) => t === "onsite_web_purchase" || t === "web_in_store_purchase",
+    (t: string) => t === "purchase",
+  ];
+
   const isFollow = (t: string) =>
-    t === "onsite_conversion.follow" || t === "page_engagement" || t === "follow";
+    t === "onsite_conversion.follow" || t === "follow";
   const isEngagement = (t: string) =>
     t === "post_engagement" ||
     t === "post_reaction" ||
     t === "comment" ||
     t === "post_save" ||
-    t === "post";
+    t === "page_engagement";
 
   return {
     lead: sumActions(insight.actions, isLead),
-    purchase: sumActions(insight.actions, isPurchase),
-    revenue: sumActions(insight.action_values, isPurchase),
+    purchase: pickByPriority(insight.actions, purchaseMatchers),
+    revenue: pickByPriority(insight.action_values, purchaseMatchers),
     follow: sumActions(insight.actions, isFollow),
     engagement: sumActions(insight.actions, isEngagement),
   };
@@ -193,33 +233,36 @@ export async function syncMeta(
         r.rowsByTable.adsets++;
       }
 
-      // Creatives
-      const apiCreatives = await opts.client.getCreatives(actId);
-      for (const cr of apiCreatives) {
-        await db
-          .insert(creatives)
-          .values({
-            metaId: cr.id,
-            name: cr.name,
-            type: mapCreativeType(cr),
-            thumbnailUrl: cr.thumbnail_url,
-            headline: cr.title,
-            body: cr.body,
-            callToAction: cr.call_to_action_type,
-          })
-          .onConflictDoUpdate({
-            target: creatives.metaId,
-            set: {
+      // Creatives — pulamos no daily/manual; o endpoint não tem filtro por
+      // status e devolve 1k+ thumbnails do account inteiro.
+      if (SYNC_CREATIVES[opts.mode]) {
+        const apiCreatives = await opts.client.getCreatives(actId);
+        for (const cr of apiCreatives) {
+          await db
+            .insert(creatives)
+            .values({
+              metaId: cr.id,
               name: cr.name,
               type: mapCreativeType(cr),
               thumbnailUrl: cr.thumbnail_url,
               headline: cr.title,
               body: cr.body,
               callToAction: cr.call_to_action_type,
-              updatedAt: new Date(),
-            },
-          });
-        r.rowsByTable.creatives++;
+            })
+            .onConflictDoUpdate({
+              target: creatives.metaId,
+              set: {
+                name: cr.name,
+                type: mapCreativeType(cr),
+                thumbnailUrl: cr.thumbnail_url,
+                headline: cr.title,
+                body: cr.body,
+                callToAction: cr.call_to_action_type,
+                updatedAt: new Date(),
+              },
+            });
+          r.rowsByTable.creatives++;
+        }
       }
 
       // Ads
