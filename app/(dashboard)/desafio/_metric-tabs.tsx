@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { fmt } from "@/components/dashboard/format";
-import { WeeklyOverlayChart } from "@/components/dashboard/weekly-overlay-chart";
-import type { WeeklyOverlayPoint } from "@/lib/queries/dashboard";
+import { CycleOverlayChart } from "@/components/dashboard/cycle-overlay-chart";
+import type { CycleOverlayPoint } from "@/lib/queries/dashboard";
 
 type MetricKey = "spend" | "purchases" | "revenue" | "leads";
 
@@ -15,33 +15,53 @@ const METRICS: Array<{ key: MetricKey; label: string; format: "money" | "int" }>
   { key: "leads", label: "Leads", format: "int" },
 ];
 
+const DOW_LABELS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+
 interface Props {
-  points: WeeklyOverlayPoint[];
+  points: CycleOverlayPoint[];
+  cycleDays: number;
 }
 
-export function WeeklyMetricTabs({ points }: Props) {
+export function CycleMetricTabs({ points, cycleDays }: Props) {
   const [metric, setMetric] = useState<MetricKey>("spend");
   const def = METRICS.find((m) => m.key === metric)!;
 
-  // Tabela calendário (mesmo dataset, agrupado por semana × dia)
-  const byWeek = new Map<
-    string,
-    { label: string; days: Map<number, number>; total: number }
+  // Agrega por ciclo × dia do ciclo
+  const byCycle = new Map<
+    number,
+    {
+      cycleStart: string;
+      cycleEnd: string;
+      label: string;
+      days: Map<number, number>;
+      total: number;
+    }
   >();
   for (const p of points) {
-    const e = byWeek.get(p.weekStart) ?? {
-      label: p.weekLabel,
-      days: new Map<number, number>(),
-      total: 0,
-    };
+    if (p.cycleOffset < 0) continue;
+    const e =
+      byCycle.get(p.cycleOffset) ??
+      {
+        cycleStart: p.cycleStart,
+        cycleEnd: p.cycleEnd,
+        label: p.cycleLabel,
+        days: new Map<number, number>(),
+        total: 0,
+      };
     const v = (p[metric] as number) ?? 0;
-    e.days.set(p.dayOfWeek, (e.days.get(p.dayOfWeek) ?? 0) + v);
+    e.days.set(p.dayInCycle, (e.days.get(p.dayInCycle) ?? 0) + v);
     e.total += v;
-    byWeek.set(p.weekStart, e);
+    byCycle.set(p.cycleOffset, e);
   }
-  const calRows = [...byWeek.entries()]
-    .sort((a, b) => b[0].localeCompare(a[0]))
-    .map(([weekStart, w]) => ({ weekStart, ...w }));
+  const calRows = [...byCycle.entries()].sort((a, b) => a[0] - b[0]).map(([offset, w]) => ({
+    offset,
+    ...w,
+  }));
+
+  const colHeaders =
+    cycleDays === 7
+      ? DOW_LABELS
+      : Array.from({ length: cycleDays }, (_, i) => `D${i + 1}`);
 
   const fmtVal = (v: number) =>
     def.format === "money" ? fmt.money(v) : fmt.int(v);
@@ -65,14 +85,14 @@ export function WeeklyMetricTabs({ points }: Props) {
         ))}
       </div>
 
-      <WeeklyOverlayChart points={points} metric={metric} format={def.format} />
+      <CycleOverlayChart points={points} metric={metric} format={def.format} cycleDays={cycleDays} />
 
       <div className="mt-6 overflow-x-auto">
         <table className="w-full text-xs">
           <thead className="text-muted-foreground">
             <tr>
-              <th className="text-left font-normal py-2 pl-2">Semana</th>
-              {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map((d) => (
+              <th className="text-left font-normal py-2 pl-2">Ciclo</th>
+              {colHeaders.map((d) => (
                 <th key={d} className="text-right font-normal py-2 px-2">
                   {d}
                 </th>
@@ -83,7 +103,7 @@ export function WeeklyMetricTabs({ points }: Props) {
           <tbody>
             {calRows.map((r, i) => (
               <tr
-                key={r.weekStart}
+                key={r.cycleStart}
                 className={cn(
                   "border-t border-border/50",
                   i === 0 && "bg-primary/5 text-foreground",
@@ -91,11 +111,13 @@ export function WeeklyMetricTabs({ points }: Props) {
               >
                 <td className="py-2 pl-2 font-medium">
                   {r.label}
-                  <span className="ml-2 text-muted-foreground">{fmt.shortDate(r.weekStart)}</span>
+                  <span className="ml-2 text-muted-foreground">
+                    {fmt.shortDate(r.cycleStart)} → {fmt.shortDate(r.cycleEnd)}
+                  </span>
                 </td>
-                {[1, 2, 3, 4, 5, 6, 7].map((dow) => (
-                  <td key={dow} className="text-right tabular-nums px-2">
-                    {fmtVal(r.days.get(dow) ?? 0)}
+                {Array.from({ length: cycleDays }, (_, i) => i + 1).map((day) => (
+                  <td key={day} className="text-right tabular-nums px-2">
+                    {fmtVal(r.days.get(day) ?? 0)}
                   </td>
                 ))}
                 <td className="text-right tabular-nums pr-2 font-medium">{fmtVal(r.total)}</td>

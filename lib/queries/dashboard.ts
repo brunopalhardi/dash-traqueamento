@@ -246,13 +246,18 @@ export async function getProductBreakdown(range: DateRange): Promise<ProductBrea
 }
 
 /**
- * Para o dash Desafio: retorna pontos diários nas últimas N semanas + a corrente.
- * Cada ponto traz o offset (1=Seg, 7=Dom) pra plotar com eixo X = dia da semana.
+ * Para o dash Desafio: retorna pontos diários nos últimos N ciclos + o atual.
+ * O ciclo é uma janela deslizante de `cycleDays` dias terminando em "today".
+ *
+ * `dayInCycle` (1..cycleDays) é o offset dentro do ciclo, usado como eixo X
+ * do overlay chart. Cada ciclo vira uma linha sobreposta.
  */
-export interface WeeklyOverlayPoint {
-  weekStart: string; // segunda da semana (YYYY-MM-DD)
-  weekLabel: string; // "Esta semana" | "Sem -1" | etc
-  dayOfWeek: number; // 1..7 (seg..dom)
+export interface CycleOverlayPoint {
+  cycleStart: string; // YYYY-MM-DD do primeiro dia do ciclo
+  cycleEnd: string;
+  cycleLabel: string; // "Ciclo atual" | "Ciclo -1" | …
+  cycleOffset: number; // 0=atual, 1=passado, 2=retrasado…
+  dayInCycle: number; // 1..cycleDays
   date: string;
   spend: number;
   revenue: number;
@@ -260,41 +265,106 @@ export interface WeeklyOverlayPoint {
   leads: number;
 }
 
-export async function getWeeklyOverlay(
-  slug: ProductSlug,
-  weeks: number,
-): Promise<WeeklyOverlayPoint[]> {
-  // Calcula segunda corrente em horário SP
-  const today = new Date();
-  const dow = ((today.getDay() + 6) % 7); // dom=0 -> 6, seg=1 -> 0, …
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - dow);
-  monday.setHours(0, 0, 0, 0);
+function dateISO(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
 
-  const start = new Date(monday);
-  start.setDate(monday.getDate() - 7 * (weeks - 1));
-  const range = {
-    from: start.toISOString().slice(0, 10),
-    to: today.toISOString().slice(0, 10),
+function addDays(d: Date, n: number): Date {
+  const out = new Date(d);
+  out.setDate(out.getDate() + n);
+  return out;
+}
+
+/**
+ * Range "ciclo atual" = últimos `cycleDays` dias terminando hoje.
+ * Se `customStart`+`customEnd` forem passados, ignora cycleDays e usa o intervalo direto.
+ */
+export function rangeCurrentCycle(
+  cycleDays: number,
+  custom?: { start: string; end: string },
+): DateRange {
+  if (custom) return { from: custom.start, to: custom.end };
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const from = addDays(today, -(cycleDays - 1));
+  return { from: dateISO(from), to: dateISO(today) };
+}
+
+/** Range do ciclo anterior (de mesmo tamanho) ao atual. */
+export function rangePreviousCycle(currentRange: DateRange): DateRange {
+  const fromCurr = new Date(currentRange.from + "T00:00:00");
+  const toCurr = new Date(currentRange.to + "T00:00:00");
+  const days = Math.round((toCurr.getTime() - fromCurr.getTime()) / 86400000) + 1;
+  const prevTo = addDays(fromCurr, -1);
+  const prevFrom = addDays(prevTo, -(days - 1));
+  return { from: dateISO(prevFrom), to: dateISO(prevTo) };
+}
+
+/**
+ * Overlay de até `cyclesBack` ciclos passados + o atual.
+ *
+ * - Quando `customStart/customEnd` é passado, o ciclo atual = esse intervalo
+ *   e o tamanho do ciclo é derivado dele.
+ * - Cycles anteriores são gerados deslocando a janela atual `cycleDays` dias
+ *   pra trás, sucessivamente.
+ */
+export async function getCycleOverlay(
+  slug: ProductSlug,
+  opts: {
+    cycleDays?: number;
+    cyclesBack?: number;
+    custom?: { start: string; end: string };
+  },
+): Promise<CycleOverlayPoint[]> {
+  const customDays = opts.custom
+    ? Math.round(
+        (new Date(opts.custom.end + "T00:00:00").getTime() -
+          new Date(opts.custom.start + "T00:00:00").getTime()) /
+          86400000,
+      ) + 1
+    : null;
+  const cycleDays = customDays ?? opts.cycleDays ?? 7;
+  const cyclesBack = opts.cyclesBack ?? 4;
+
+  const current = rangeCurrentCycle(cycleDays, opts.custom);
+
+  // Range total: do início do ciclo mais antigo até o fim do ciclo atual
+  const oldestStart = addDays(
+    new Date(current.from + "T00:00:00"),
+    -cycleDays * cyclesBack,
+  );
+  const fullRange: DateRange = {
+    from: dateISO(oldestStart),
+    to: current.to,
   };
 
-  const series = await getDailySeries(slug, range);
+  const series = await getDailySeries(slug, fullRange);
+  const currentStart = new Date(current.from + "T00:00:00");
 
   return series.map((p) => {
     const d = new Date(p.date + "T00:00:00");
-    const dDow = ((d.getDay() + 6) % 7) + 1; // 1..7
-    const wMonday = new Date(d);
-    wMonday.setDate(d.getDate() - (dDow - 1));
-    const weekStart = wMonday.toISOString().slice(0, 10);
-    const weeksAgo = Math.round(
-      (monday.getTime() - wMonday.getTime()) / (7 * 24 * 3600 * 1000),
-    );
-    const weekLabel =
-      weeksAgo === 0 ? "Esta semana" : weeksAgo === 1 ? "Semana passada" : `${weeksAgo} sem atrás`;
+    const diffDays = Math.floor((currentStart.getTime() - d.getTime()) / 86400000);
+    // ciclo 0 = atual; ciclo 1 = anterior; …
+    const cycleOffset = diffDays < 0 ? 0 : Math.floor(diffDays / cycleDays) + (diffDays % cycleDays === 0 ? 0 : 0);
+    // Calcula início do ciclo do ponto
+    const cycleStart = addDays(currentStart, -cycleOffset * cycleDays);
+    const cycleEnd = addDays(cycleStart, cycleDays - 1);
+    const dayInCycle =
+      Math.floor((d.getTime() - cycleStart.getTime()) / 86400000) + 1;
+
+    const cycleLabel =
+      cycleOffset === 0
+        ? "Ciclo atual"
+        : cycleOffset === 1
+          ? "Ciclo passado"
+          : `Ciclo -${cycleOffset}`;
+
     return {
-      weekStart,
-      weekLabel,
-      dayOfWeek: dDow,
+      cycleStart: dateISO(cycleStart),
+      cycleEnd: dateISO(cycleEnd),
+      cycleLabel,
+      cycleOffset,
+      dayInCycle,
       date: p.date,
       spend: p.spend,
       revenue: p.revenue,

@@ -12,11 +12,11 @@ import {
 } from "recharts";
 import { useMemo } from "react";
 import { fmt } from "./format";
-import type { WeeklyOverlayPoint } from "@/lib/queries/dashboard";
+import type { CycleOverlayPoint } from "@/lib/queries/dashboard";
 
 const DOW_LABELS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 const PALETTE = [
-  "var(--color-primary)", // semana atual: violeta forte
+  "var(--color-primary)", // ciclo atual: gold forte
   "rgba(255,255,255,0.55)",
   "rgba(255,255,255,0.35)",
   "rgba(255,255,255,0.22)",
@@ -24,29 +24,47 @@ const PALETTE = [
 ];
 
 interface Props {
-  points: WeeklyOverlayPoint[];
+  points: CycleOverlayPoint[];
   metric: "spend" | "revenue" | "purchases" | "leads";
   format: "money" | "int";
+  cycleDays: number;
 }
 
-export function WeeklyOverlayChart({ points, metric, format }: Props) {
-  const { rows, weeks } = useMemo(() => {
-    const byWeek = new Map<string, { label: string; data: Map<number, number> }>();
+export function CycleOverlayChart({ points, metric, format, cycleDays }: Props) {
+  const { rows, cycles } = useMemo(() => {
+    const byCycle = new Map<
+      number,
+      { label: string; data: Map<number, number> }
+    >();
     for (const p of points) {
-      const e = byWeek.get(p.weekStart) ?? { label: p.weekLabel, data: new Map() };
-      e.data.set(p.dayOfWeek, (e.data.get(p.dayOfWeek) ?? 0) + (p[metric] as number));
-      byWeek.set(p.weekStart, e);
+      if (p.cycleOffset < 0) continue;
+      const e =
+        byCycle.get(p.cycleOffset) ?? { label: p.cycleLabel, data: new Map() };
+      e.data.set(p.dayInCycle, (e.data.get(p.dayInCycle) ?? 0) + (p[metric] as number));
+      byCycle.set(p.cycleOffset, e);
     }
-    const weekList = [...byWeek.entries()].sort((a, b) => b[0].localeCompare(a[0]));
-    const rows = DOW_LABELS.map((dow, idx) => {
-      const r: Record<string, number | string> = { dow };
-      for (const [, w] of weekList) {
+
+    // Eixo X: pra ciclo de 7 dias usa "Seg..Dom"; pra outros usa "Dia 1..N"
+    const xLabels =
+      cycleDays === 7
+        ? DOW_LABELS
+        : Array.from({ length: cycleDays }, (_, i) => `Dia ${i + 1}`);
+
+    const rows = xLabels.map((xLabel, idx) => {
+      const r: Record<string, number | string> = { xLabel };
+      for (const [, w] of byCycle) {
         r[w.label] = w.data.get(idx + 1) ?? 0;
       }
       return r;
     });
-    return { rows, weeks: weekList.map(([, w]) => w.label) };
-  }, [points, metric]);
+
+    // Ordem: atual primeiro, depois -1, -2, …
+    const cycleList = [...byCycle.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([, w]) => w.label);
+
+    return { rows, cycles: cycleList };
+  }, [points, metric, cycleDays]);
 
   const fmtVal = (v: number) => (format === "money" ? fmt.money(v, true) : fmt.int(v, true));
 
@@ -55,7 +73,7 @@ export function WeeklyOverlayChart({ points, metric, format }: Props) {
       <LineChart data={rows} margin={{ top: 8, right: 12, left: 8, bottom: 8 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
         <XAxis
-          dataKey="dow"
+          dataKey="xLabel"
           stroke="rgba(255,255,255,0.4)"
           fontSize={11}
           tickLine={false}
@@ -82,10 +100,10 @@ export function WeeklyOverlayChart({ points, metric, format }: Props) {
           }}
         />
         <Legend iconType="circle" wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-        {weeks.map((w, i) => (
+        {cycles.map((c, i) => (
           <Line
-            key={w}
-            dataKey={w}
+            key={c}
+            dataKey={c}
             stroke={PALETTE[i] ?? PALETTE[PALETTE.length - 1]}
             strokeWidth={i === 0 ? 3 : 1.5}
             dot={i === 0 ? { r: 3 } : false}
