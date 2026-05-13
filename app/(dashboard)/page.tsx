@@ -1,3 +1,4 @@
+import { DollarSign, TrendingUp, Target, Users2, Wallet } from "lucide-react";
 import {
   getDailySeries,
   getKpis,
@@ -50,28 +51,33 @@ export default async function GeralPage({
           value={fmt.money(kpis.spend)}
           delta={fmt.delta(kpis.spend, prevKpis.spend)}
           invertDelta
+          icon={Wallet}
         />
         <KpiCard
           label="Receita (Pixel)"
           value={fmt.money(kpis.revenue)}
           delta={fmt.delta(kpis.revenue, prevKpis.revenue)}
+          icon={DollarSign}
         />
         <KpiCard
           label="ROAS"
           value={fmt.ratio(kpis.roas)}
           delta={fmt.delta(kpis.roas, prevKpis.roas)}
           hint={`vs ${fmt.ratio(prevKpis.roas)} anterior`}
+          icon={TrendingUp}
         />
         <KpiCard
           label="Leads"
           value={fmt.int(kpis.leads)}
           delta={fmt.delta(kpis.leads, prevKpis.leads)}
+          icon={Users2}
         />
         <KpiCard
           label="CPL médio"
           value={fmt.money(kpis.cpl)}
           delta={fmt.delta(kpis.cpl, prevKpis.cpl)}
           invertDelta
+          icon={Target}
         />
       </section>
 

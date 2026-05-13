@@ -4,12 +4,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { cn } from "@/lib/utils";
 
-const PRESETS: Array<{ value: string; label: string; days: number }> = [
-  { value: "1", label: "Hoje", days: 1 },
-  { value: "7", label: "7d", days: 7 },
-  { value: "14", label: "14d", days: 14 },
-  { value: "30", label: "30d", days: 30 },
-  { value: "90", label: "90d", days: 90 },
+const PRESETS: Array<{ value: string; label: string }> = [
+  { value: "7", label: "7d" },
+  { value: "30", label: "30d" },
+  { value: "90", label: "90d" },
 ];
 
 export function DateRangePicker({ defaultDays = 7 }: { defaultDays?: number }) {
@@ -29,7 +27,7 @@ export function DateRangePicker({ defaultDays = 7 }: { defaultDays?: number }) {
   return (
     <div
       className={cn(
-        "inline-flex items-center rounded-md border border-border/70 bg-card/40 p-1 text-xs",
+        "inline-flex items-center rounded-md bg-card border border-border/60 p-0.5 text-xs",
         pending && "opacity-70",
       )}
     >
@@ -38,10 +36,10 @@ export function DateRangePicker({ defaultDays = 7 }: { defaultDays?: number }) {
           key={p.value}
           onClick={() => set(p.value)}
           className={cn(
-            "px-2.5 py-1 rounded-sm transition-colors",
+            "px-3 py-1.5 rounded-sm transition-colors font-medium",
             current === p.value
-              ? "bg-primary text-primary-foreground font-medium"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground",
           )}
         >
           {p.label}

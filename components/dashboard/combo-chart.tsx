@@ -71,7 +71,7 @@ export function ComboChart({ data, xKey, series, height = 280 }: ComboChartProps
         ) : null}
         <Tooltip
           contentStyle={{
-            background: "oklch(0.22 0.03 280)",
+            background: "oklch(0.21 0.006 60)",
             border: "1px solid rgba(255,255,255,0.1)",
             borderRadius: 8,
             fontSize: 12,
