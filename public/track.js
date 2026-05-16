@@ -156,6 +156,38 @@
       });
   }
 
+  // Reescreve links de checkout Hotmart injetando ?src=<utm_source>__<utm_campaign>__<utm_content>
+  // baseado na atribuição do cookie. Só mexe se o link ainda não tiver src=.
+  // Assim a atribuição sobrevive ao pulo LP→checkout mesmo sem submit de form.
+  function buildHotmartSrc() {
+    var parts = [
+      attribution.utm_source,
+      attribution.utm_campaign,
+      attribution.utm_content,
+    ];
+    var clean = parts
+      .map(function (p) {
+        return p ? String(p).replace(/[^\w-]+/g, "") : "";
+      })
+      .filter(Boolean);
+    return clean.length ? clean.join("__") : null;
+  }
+
+  function rewriteHotmartLinks() {
+    var src = buildHotmartSrc();
+    if (!src) return;
+    var anchors = document.getElementsByTagName("a");
+    for (var i = 0; i < anchors.length; i++) {
+      var a = anchors[i];
+      var href = a.getAttribute("href");
+      if (!href) continue;
+      if (!/hotmart\.com/i.test(href)) continue;
+      if (/[?&]src=/.test(href)) continue;
+      var sep = href.indexOf("?") === -1 ? "?" : "&";
+      a.setAttribute("href", href + sep + "src=" + encodeURIComponent(src));
+    }
+  }
+
   function autoAttachForms() {
     // Hooka automaticamente forms que têm input[name=email] ou [name=phone]
     document.addEventListener(
@@ -187,9 +219,23 @@
     attribution: attribution,
   };
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", autoAttachForms);
-  } else {
+  function boot() {
     autoAttachForms();
+    rewriteHotmartLinks();
+    // Cobre LPs que inserem links via JS depois do load (popups, SPAs leves)
+    if (typeof MutationObserver !== "undefined") {
+      try {
+        var mo = new MutationObserver(function () {
+          rewriteHotmartLinks();
+        });
+        mo.observe(document.body, { childList: true, subtree: true });
+      } catch (e) {}
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
   }
 })();

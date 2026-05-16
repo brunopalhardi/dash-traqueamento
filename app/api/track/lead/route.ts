@@ -55,8 +55,14 @@ function classifySource(
   fbclid?: string,
 ): "meta" | "organic" | "unknown" {
   if (fbclid) return "meta";
-  if (utmMedium === "paid" || utmSource?.startsWith("paid_")) return "meta";
-  if (utmMedium === "organic" || utmSource?.startsWith("organic_")) return "organic";
+  const src = utmSource?.toLowerCase();
+  const med = utmMedium?.toLowerCase();
+  // Convenção real da planilha do Bruno: utm_source=MetaAds|Organico
+  if (src === "metaads" || src === "meta_ads" || src === "meta-ads") return "meta";
+  if (src === "organico" || src === "orgânico") return "organic";
+  // Convenção genérica (mantida pra compat)
+  if (med === "paid" || src?.startsWith("paid_")) return "meta";
+  if (med === "organic" || src?.startsWith("organic_")) return "organic";
   return "unknown";
 }
 
