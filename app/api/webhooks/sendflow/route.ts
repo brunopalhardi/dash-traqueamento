@@ -302,15 +302,23 @@ export async function POST(req: NextRequest) {
 
   // SendFlow pode mandar batch (array) ou evento único — normaliza pra array
   const items = Array.isArray(raw) ? raw : [raw];
-  const results: Array<{ ok: boolean; reason?: string; eventId?: number }> = [];
+  const results: Array<{ ok: boolean; eventId?: number; warn?: string }> = [];
 
   for (const item of items) {
-    const parsed = parsePayload(item);
-    if (!parsed) {
-      // Persiste mesmo sem conseguir parsear, pra debug
-      console.warn("[sendflow] payload sem group_id reconhecido", item);
-      results.push({ ok: false, reason: "unparseable" });
-      continue;
+    const parsedRaw = parsePayload(item);
+    // Mesmo se não conseguimos parsear, persistimos um row "__unparsed__" pra Bruno
+    // inspecionar o raw_payload e ajustar o parser. Sem isso, o evento sumia.
+    const parsed: ParsedEvent = parsedRaw ?? {
+      groupExternalId: "__unparsed__",
+      groupName: null,
+      phoneRaw: null,
+      phoneNormalized: null,
+      contactName: null,
+      eventType: "unknown",
+      occurredAt: new Date(),
+    };
+    if (!parsedRaw) {
+      console.warn("[sendflow] payload sem group_id reconhecido — salvando como __unparsed__", item);
     }
 
     const groupId = await upsertGroup(parsed);
@@ -331,7 +339,11 @@ export async function POST(req: NextRequest) {
 
     await applyMemberState(groupId, parsed);
 
-    results.push({ ok: true, eventId: event.id });
+    results.push({
+      ok: true,
+      eventId: event.id,
+      ...(parsedRaw ? {} : { warn: "payload não reconhecido — salvo como __unparsed__" }),
+    });
   }
 
   return NextResponse.json({ ok: true, processed: results.length, results });
