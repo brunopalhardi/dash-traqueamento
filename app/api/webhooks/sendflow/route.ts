@@ -120,12 +120,15 @@ function parsePayload(raw: unknown): ParsedEvent | null {
   if (!raw || typeof raw !== "object") return null;
   const root = raw as Record<string, unknown>;
 
-  // Alguns serviços encapsulam em { event: {...} } ou { data: {...} } ou { payload: {...} }
-  const inner =
-    (root.event as Record<string, unknown> | undefined) ??
-    (root.data as Record<string, unknown> | undefined) ??
-    (root.payload as Record<string, unknown> | undefined) ??
-    root;
+  // Alguns serviços encapsulam em { event: {...} } / { data: {...} } / { payload: {...} }.
+  // Mas event/type/etc também podem ser strings no root ("event":"joined") — só
+  // descer pro inner se for de fato um objeto, senão o pick falha em buscar chaves.
+  function asObj(v: unknown): Record<string, unknown> | null {
+    return v && typeof v === "object" && !Array.isArray(v)
+      ? (v as Record<string, unknown>)
+      : null;
+  }
+  const inner = asObj(root.data) ?? asObj(root.payload) ?? asObj(root.event) ?? root;
 
   const groupId = pick<string | number>(inner, [
     "group_id",
