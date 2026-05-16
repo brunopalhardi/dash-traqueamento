@@ -258,18 +258,14 @@ async function applyMemberState(
         whatsappGroupMembers.groupExternalId,
         whatsappGroupMembers.phoneNormalized,
       ],
-      // Só sobrescreve estado se o evento novo é mais recente. Eventos
-      // fora de ordem (replay, race) não fazem regredir o currently_in_group.
       set: {
+        // Mantém nome antigo se o novo evento vier sem
         name: sql`coalesce(excluded.name, ${whatsappGroupMembers.name})`,
-        firstJoinedAt: sql`coalesce(${whatsappGroupMembers.firstJoinedAt}, ${inGroup ? parsed.occurredAt : null})`,
-        lastEventAt: sql`greatest(${whatsappGroupMembers.lastEventAt}, ${parsed.occurredAt})`,
-        lastEventType: sql`case when ${parsed.occurredAt} >= ${whatsappGroupMembers.lastEventAt}
-          then ${parsed.eventType}::whatsapp_event_type
-          else ${whatsappGroupMembers.lastEventType} end`,
-        currentlyInGroup: sql`case when ${parsed.occurredAt} >= ${whatsappGroupMembers.lastEventAt}
-          then ${inGroup}
-          else ${whatsappGroupMembers.currentlyInGroup} end`,
+        // Mantém o primeiro join_at; só preenche se ainda for null e este evento é joined
+        firstJoinedAt: sql`coalesce(${whatsappGroupMembers.firstJoinedAt}, excluded.first_joined_at)`,
+        lastEventAt: parsed.occurredAt,
+        lastEventType: parsed.eventType,
+        currentlyInGroup: inGroup,
         updatedAt: now,
       },
     });
