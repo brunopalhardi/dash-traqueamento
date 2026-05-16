@@ -16,6 +16,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { leads } from "@/lib/schema/leads";
+import { normalizePhone } from "@/lib/utils/phone";
 
 export const dynamic = "force-dynamic";
 
@@ -38,15 +39,6 @@ function normalizeEmail(s?: string): string | null {
   const t = s.trim().toLowerCase();
   if (!t.includes("@")) return null;
   return t;
-}
-
-function normalizePhone(s?: string): string | null {
-  if (!s) return null;
-  // Só dígitos
-  const digits = s.replace(/\D+/g, "");
-  if (digits.length < 10) return null;
-  // Já com país? mantém. Senão prefixa 55 (Brasil)
-  return digits.startsWith("55") ? digits : `55${digits}`;
 }
 
 function classifySource(

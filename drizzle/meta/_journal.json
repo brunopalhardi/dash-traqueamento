@@ -43,6 +43,13 @@
       "when": 1778676982351,
       "tag": "0005_normal_annihilus",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778962838732,
+      "tag": "0006_windy_mojo",
+      "breakpoints": true
     }
   ]
 }

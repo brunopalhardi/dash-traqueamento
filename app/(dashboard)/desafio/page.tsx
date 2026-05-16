@@ -8,11 +8,13 @@ import {
   rangePreviousCycle,
 } from "@/lib/queries/dashboard";
 import { getOrganicSummary } from "@/lib/queries/organic";
+import { getWhatsappSummary } from "@/lib/queries/whatsapp";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CycleSelector } from "@/components/dashboard/cycle-selector";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { FunnelChart } from "@/components/dashboard/funnel-chart";
 import { fmt } from "@/components/dashboard/format";
+import { GroupPanel } from "@/components/dashboard/group-panel";
 import { HierarchyTable } from "@/components/dashboard/hierarchy-table";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { OrganicPanel } from "@/components/dashboard/organic-panel";
@@ -55,7 +57,7 @@ export default async function DesafioPage({
   const currentRange = rangeCurrentCycle(cycleDays, custom);
   const prevRange = rangePreviousCycle(currentRange);
 
-  const [kpis, prevKpis, overlay, funnel, quality, campaignsTbl, adsetsTbl, adsTbl, organic] = await Promise.all([
+  const [kpis, prevKpis, overlay, funnel, quality, campaignsTbl, adsetsTbl, adsTbl, organic, whatsapp] = await Promise.all([
     getKpis("desafio", currentRange),
     getKpis("desafio", prevRange),
     getCycleOverlay("desafio", { cycleDays, cyclesBack: CYCLES_BACK, custom }),
@@ -65,6 +67,7 @@ export default async function DesafioPage({
     getHierarchyTable("desafio", currentRange, "adset"),
     getHierarchyTable("desafio", currentRange, "ad"),
     getOrganicSummary("desafio", currentRange),
+    getWhatsappSummary("desafio", currentRange),
   ]);
 
   const hasData = overlay.some((p) => p.cycleOffset === 0);
@@ -207,6 +210,18 @@ export default async function DesafioPage({
         </CardHeader>
         <CardContent>
           <OrganicPanel data={organic} />
+        </CardContent>
+      </Card>
+
+      {/* Grupos WhatsApp (SendFlow) */}
+      <Card className="bg-card border-border/60 mb-6">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Grupos WhatsApp — SendFlow
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <GroupPanel data={whatsapp} />
         </CardContent>
       </Card>
 
