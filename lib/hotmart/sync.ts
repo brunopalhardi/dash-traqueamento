@@ -92,23 +92,30 @@ export async function syncSalesHistory({ days }: { days: number }): Promise<Sync
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    await db
-      .update(syncJobs)
-      .set({
-        status: "failed",
-        finishedAt: new Date(),
-        rowsProcessed: processed,
-        errorMessage: message,
-        details: {
-          days,
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-          processed,
-          upserted,
-          skipped,
-        },
-      })
-      .where(eq(syncJobs.id, job.id));
+    // Wrap em try/catch pra não mascarar `err` se o próprio update falhar
+    // (DB indisponível, etc). Aceita ficar com row 'running' em troca de
+    // propagar a causa raiz.
+    try {
+      await db
+        .update(syncJobs)
+        .set({
+          status: "failed",
+          finishedAt: new Date(),
+          rowsProcessed: processed,
+          errorMessage: message,
+          details: {
+            days,
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
+            processed,
+            upserted,
+            skipped,
+          },
+        })
+        .where(eq(syncJobs.id, job.id));
+    } catch (updateErr) {
+      console.error("[hotmart-sync] failed to persist failure state:", updateErr);
+    }
     throw err;
   }
 
