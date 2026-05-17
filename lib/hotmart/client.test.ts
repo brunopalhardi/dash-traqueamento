@@ -50,7 +50,7 @@ describe("fetchSalesHistory", () => {
         endDate: new Date("2026-05-17T00:00:00Z"),
       }),
     );
-    expect(items.map((i: { id: number }) => i.id)).toEqual([1, 2, 3, 4, 5]);
+    expect((items as { id: number }[]).map((i) => i.id)).toEqual([1, 2, 3, 4, 5]);
   });
 
   it("envia start_date e end_date como epoch ms e Bearer token", async () => {
