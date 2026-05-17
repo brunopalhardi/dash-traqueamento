@@ -61,13 +61,14 @@ Dashboard próprio de tráfego pago + vendas, inspirado no **VK Metrics** (vkmet
 - ✅ **Desafio Fase 1** (commit `5d473d9`) — CycleSelector (7d/14d/15d/Custom), `getCycleOverlay`, eixo X dinâmico (Seg..Dom pra 7d, Dia 1..N pros outros)
 - ✅ **Desafio Fase 2** (commit `b07821d`) — painéis Tráfego (funil), Qualidade (donut score 0-100 com pesos ROAS 40% / CPL 30% / Tx.Conv 30%), Top criativos, tabela hierárquica (Campanhas/Conjuntos/Anúncios com search+sort+totals)
 - ✅ **Desafio Fase 3** (commit `8a7ffb9`) — captura de UTMs orgânicas: `public/track.js` auto-attach em forms, `/api/track/lead` classifica source (meta se fbclid/`utm_medium=paid`; organic se `utm_medium=organic` ou `utm_source=organic_*`), painel "Orgânico" em /desafio (total + barras por origem + bar chart diário)
+- ✅ **Hotmart webhook + tabela purchases** — `/api/webhooks/hotmart` aceita `PURCHASE_APPROVED/REFUNDED/CHARGEBACK`; idempotência via `transaction_id`; match com grupo WhatsApp via `buyer_phone_e164` normalizado. (Spec/plano: `docs/superpowers/specs/2026-05-17-poda-foco-desafio-guia-design.md`)
 
 ### Pendências imediatas (em ordem)
 
 1. **Bruno validar números em produção** — comparar /desafio (Fases 1-3) com Gerenciador Meta + planilha de leads + VK Metrics. Reportar divergências; eu fixo antes de seguir.
 2. **Mini-Fase 3.5** (~1h, não iniciada) — (a) adaptar classifier do `/api/track/lead` pra convenção real do Bruno (planilha usa `utm_source=Organico|MetaAds`, não `utm_medium=organic`); (b) `track.js` reescrever links `<a href*="hotmart.com">` injetando `src=` com os UTMs do cookie pra atribuição sobreviver ao pulo LP→checkout
 3. **Fase 4 — SendFlow** (~2-3h) — webhook recebe entrada/saída de grupo, persiste em tabelas novas. Bruno precisa gerar `SENDFLOW_WEBHOOK_TOKEN` e cadastrar webhook no painel
-4. **Fase 5 — Hotmart webhook + aba "Pendentes no grupo"** (~3-4h) — Bruno precisa cadastrar `HOTTOK` na Vercel e criar webhook no painel Hotmart apontando pra `/api/webhooks/hotmart`. Eventos: `PURCHASE_APPROVED`, `PURCHASE_REFUNDED`, `PURCHASE_CHARGEBACK`
+4. **Bruno cadastrar Hotmart webhook em produção** — gerar `HOTTOK` na Vercel e cadastrar webhook no painel Hotmart apontando pra `https://dash-traqueamento.vercel.app/api/webhooks/hotmart` com eventos `PURCHASE_APPROVED`, `PURCHASE_REFUNDED`, `PURCHASE_CHARGEBACK`.
 
 ### Plano detalhado do Desafio (com bug-tracking)
 
