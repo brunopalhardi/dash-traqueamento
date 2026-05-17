@@ -5,7 +5,7 @@
  * Se a nomenclatura mudar, ajusta aqui — os dashes/queries/sidebar leem daqui.
  */
 
-export type ProductSlug = "geral" | "c1" | "desafio" | "sono" | "guia" | "lancamento";
+export type ProductSlug = "geral" | "desafio" | "guia";
 
 export interface Product {
   slug: ProductSlug;
@@ -27,21 +27,11 @@ export const PRODUCTS: Product[] = [
     slug: "geral",
     label: "Geral",
     shortLabel: "Geral",
-    description: "Visão consolidada de todos os produtos",
+    description: "Visão consolidada de Desafio e Guia",
     metaAccountId: null,
     namePattern: null,
     accent: "violet-500",
     defaultRangeDays: 7,
-  },
-  {
-    slug: "c1",
-    label: "C1 — Atração",
-    shortLabel: "C1",
-    description: "Anúncios de atração de seguidores ([C1] Post do Instagram)",
-    metaAccountId: "act_1394993860878989",
-    namePattern: /\[C1\]/i,
-    accent: "sky-500",
-    defaultRangeDays: 30,
   },
   {
     slug: "desafio",
@@ -51,17 +41,7 @@ export const PRODUCTS: Product[] = [
     metaAccountId: "act_1394993860878989",
     namePattern: /VENDAS-DESAFIO/i,
     accent: "fuchsia-500",
-    defaultRangeDays: 7, // semana corrente; o dash usa lógica própria
-  },
-  {
-    slug: "sono",
-    label: "Protocolo do Sono",
-    shortLabel: "Sono",
-    description: "Produto perpétuo de menor ticket",
-    metaAccountId: "act_972744231680763",
-    namePattern: /PERPETUO-SONO|PROTOCOLO.*SONO/i,
-    accent: "indigo-500",
-    defaultRangeDays: 30,
+    defaultRangeDays: 7,
   },
   {
     slug: "guia",
@@ -73,16 +53,6 @@ export const PRODUCTS: Product[] = [
     accent: "amber-500",
     defaultRangeDays: 30,
   },
-  {
-    slug: "lancamento",
-    label: "Lançamento (em standby)",
-    shortLabel: "Lançamento",
-    description: "Lançamentos numerados [OBA<n>] — em desenvolvimento",
-    metaAccountId: "act_1394993860878989",
-    namePattern: /\[OBA\d+\]/i,
-    accent: "rose-500",
-    defaultRangeDays: 30,
-  },
 ];
 
 export function getProduct(slug: ProductSlug): Product {
@@ -92,8 +62,7 @@ export function getProduct(slug: ProductSlug): Product {
 }
 
 export function getDashboardProducts(): Product[] {
-  // Lançamento ainda não vai pra sidebar (standby)
-  return PRODUCTS.filter((p) => p.slug !== "lancamento");
+  return PRODUCTS;
 }
 
 /**

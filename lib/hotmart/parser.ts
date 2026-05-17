@@ -53,7 +53,7 @@ function toDate(v: unknown): Date {
 function detectProductByName(name: string | null): ProductSlug | "outros" {
   if (!name) return "outros";
   for (const p of PRODUCTS) {
-    if (p.slug === "geral" || p.slug === "lancamento") continue;
+    if (p.slug === "geral") continue;
     if (p.namePattern && p.namePattern.test(name)) return p.slug;
   }
   // Fallback: keywords explícitas
