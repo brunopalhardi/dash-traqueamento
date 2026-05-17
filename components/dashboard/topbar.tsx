@@ -9,11 +9,8 @@ import { cn } from "@/lib/utils";
 
 const LABELS: Record<string, string> = {
   "": "Visão Geral",
-  c1: "C1 — Atração",
   desafio: "Desafio",
-  sono: "Sono",
   guia: "Guia",
-  instagram: "Instagram",
   settings: "Configurações",
   integrations: "Integrações",
 };

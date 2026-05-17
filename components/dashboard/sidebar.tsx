@@ -4,23 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Users,
   Calendar,
-  Moon,
   BookOpen,
   Settings,
   Sun,
-  Camera,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { href: "/", label: "Visão Geral", icon: LayoutDashboard },
-  { href: "/c1", label: "C1 — Atração", icon: Users },
   { href: "/desafio", label: "Desafio", icon: Calendar },
-  { href: "/sono", label: "Sono", icon: Moon },
   { href: "/guia", label: "Guia", icon: BookOpen },
-  { href: "/instagram", label: "Instagram", icon: Camera },
 ];
 
 export function Sidebar() {

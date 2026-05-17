@@ -223,7 +223,7 @@ export async function getProductBreakdown(range: DateRange): Promise<ProductBrea
 
   for (const r of rows) {
     const slug = detectProduct(r.campaignName, r.metaAccountId);
-    if (slug === "geral") continue;
+    if (slug === "geral" || slug === "outros") continue;
     const cur =
       buckets.get(slug) ??
       ({
@@ -505,68 +505,6 @@ export async function getFunnelMetrics(
     conversionRate: divSafe(k.purchases, k.clicks) * 100,
     impressionToPurchase: divSafe(k.purchases, k.impressions) * 100,
     spend: k.spend,
-  };
-}
-
-export interface QualityScore {
-  /** 0-100 */
-  score: number;
-  /** Componentes que somam pro score (cada um 0-1) */
-  breakdown: {
-    roasComponent: number; // proxy: ROAS geral / 1.5 (capped at 1)
-    cplComponent: number; // proxy: 1 - (CPL real / CPL meta), capped
-    convComponent: number; // proxy: conversionRate / convMeta, capped at 1
-  };
-  raw: {
-    roas: number;
-    cpl: number;
-    conversionRate: number;
-  };
-  /** Metas usadas (default; podem virar configurável depois) */
-  targets: {
-    roas: number;
-    cpl: number;
-    conversionRate: number;
-  };
-}
-
-/**
- * Score 0-100 composto:
- *  40% — ROAS geral vs meta (ex.: meta 1.5)
- *  30% — CPL real vs meta (ex.: meta R$ 50)
- *  30% — conversion rate (clique → compra) vs meta (ex.: meta 1%)
- *
- * Não é uma fórmula científica — é uma média ponderada simples que serve
- * pra dar uma cor/alerta rápida ("ta indo bem/mediano/ruim"). Metas
- * podem virar configurável depois.
- */
-export async function getQualityScore(
-  slug: ProductSlug,
-  range: DateRange,
-  targets: Partial<QualityScore["targets"]> = {},
-): Promise<QualityScore> {
-  const k = await getKpis(slug, range);
-  const t = {
-    roas: targets.roas ?? 1.5,
-    cpl: targets.cpl ?? 50,
-    conversionRate: targets.conversionRate ?? 1,
-  };
-  const convRate = divSafe(k.purchases, k.clicks) * 100;
-
-  const roasComponent = Math.max(0, Math.min(1, k.roas / t.roas));
-  const cplComponent =
-    k.cpl <= 0 ? 0 : Math.max(0, Math.min(1, 1 - (k.cpl - t.cpl) / t.cpl + 0.5));
-  const convComponent = Math.max(0, Math.min(1, convRate / t.conversionRate));
-
-  const score = Math.round(
-    (roasComponent * 0.4 + cplComponent * 0.3 + convComponent * 0.3) * 100,
-  );
-
-  return {
-    score,
-    breakdown: { roasComponent, cplComponent, convComponent },
-    raw: { roas: k.roas, cpl: k.cpl, conversionRate: convRate },
-    targets: t,
   };
 }
 
