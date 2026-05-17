@@ -6,6 +6,8 @@ import {
   rangeCurrentCycle,
   rangePreviousCycle,
 } from "@/lib/queries/dashboard";
+import { getBuyersForCycle } from "@/lib/queries/purchases";
+import { BuyersTable } from "@/components/dashboard/buyers-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CycleSelector } from "@/components/dashboard/cycle-selector";
 import { EmptyState } from "@/components/dashboard/empty-state";
@@ -50,12 +52,13 @@ export default async function GuiaPage({
   const currentRange = rangeCurrentCycle(cycleDays, custom);
   const prevRange = rangePreviousCycle(currentRange);
 
-  const [kpis, prevKpis, overlay, funnel, adsTbl] = await Promise.all([
+  const [kpis, prevKpis, overlay, funnel, adsTbl, buyers] = await Promise.all([
     getKpis("guia", currentRange),
     getKpis("guia", prevRange),
     getCycleOverlay("guia", { cycleDays, cyclesBack: CYCLES_BACK, custom }),
     getFunnelMetrics("guia", currentRange),
     getHierarchyTable("guia", currentRange, "ad"),
+    getBuyersForCycle("guia", currentRange),
   ]);
 
   const hasData = overlay.some((p) => p.cycleOffset === 0);
@@ -129,6 +132,17 @@ export default async function GuiaPage({
           <CardContent><TopCreatives ads={adsTbl} limit={5} /></CardContent>
         </Card>
       </section>
+
+      <Card className="bg-card border-border/60 mb-6">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Compradores do período · {buyers.length}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <BuyersTable buyers={buyers} />
+        </CardContent>
+      </Card>
     </>
   );
 }
