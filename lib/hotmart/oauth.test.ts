@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { getAccessToken, __resetOAuthCacheForTests } from "./oauth";
+import { getAccessToken, invalidateAccessTokenCache } from "./oauth";
 
 const TOKEN_RESPONSE = {
   access_token: "fake-token-xyz",
@@ -8,7 +8,7 @@ const TOKEN_RESPONSE = {
 };
 
 beforeEach(() => {
-  __resetOAuthCacheForTests();
+  invalidateAccessTokenCache();
   process.env.HOTMART_CLIENT_ID = "test-client-id";
   process.env.HOTMART_CLIENT_SECRET = "test-client-secret";
   vi.restoreAllMocks();
@@ -64,5 +64,12 @@ describe("getAccessToken", () => {
   it("lança erro se HOTMART_CLIENT_ID estiver faltando", async () => {
     delete process.env.HOTMART_CLIENT_ID;
     await expect(getAccessToken()).rejects.toThrow(/HOTMART_CLIENT_ID/);
+  });
+
+  it("lança erro quando resposta vem malformada (sem access_token)", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ expires_in: 86400 }), { status: 200 }),
+    );
+    await expect(getAccessToken()).rejects.toThrow(/hotmart oauth: resposta inválida/);
   });
 });

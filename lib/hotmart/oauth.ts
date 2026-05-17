@@ -19,8 +19,16 @@ interface CachedToken {
 
 let cache: CachedToken | null = null;
 
-/** Reseta o cache. Apenas pra uso em testes. */
-export function __resetOAuthCacheForTests(): void {
+/**
+ * Invalida o cache do access_token, forçando a próxima chamada de
+ * `getAccessToken()` a fazer uma nova request OAuth.
+ *
+ * Usado em DOIS contextos:
+ * - Testes (reset entre cases via `beforeEach`).
+ * - Produção: `lib/hotmart/client.ts` chama isso quando recebe 401 da API,
+ *   pra forçar refresh do token antes de retentar a request.
+ */
+export function invalidateAccessTokenCache(): void {
   cache = null;
 }
 
@@ -56,7 +64,10 @@ export async function getAccessToken(): Promise<string> {
     throw new Error(`hotmart oauth: ${res.status} ${body}`);
   }
 
-  const json = (await res.json()) as { access_token: string; expires_in: number };
+  const json = (await res.json()) as { access_token?: unknown; expires_in?: unknown };
+  if (typeof json.access_token !== "string" || typeof json.expires_in !== "number") {
+    throw new Error(`hotmart oauth: resposta inválida ${JSON.stringify(json)}`);
+  }
   cache = {
     token: json.access_token,
     expiresAt: now + json.expires_in * 1000,
