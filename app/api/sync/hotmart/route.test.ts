@@ -138,10 +138,21 @@ describe("POST /api/sync/hotmart", () => {
 });
 
 describe("GET /api/sync/hotmart", () => {
-  it("retorna status simples sem auth", async () => {
+  // GET é alias do POST (Vercel Cron dispara via GET com Authorization).
+  it("401 sem CRON_SECRET (alias do POST)", async () => {
     const req = new NextRequest(new URL("http://localhost/api/sync/hotmart"));
     const res = await GET(req);
+    expect(res.status).toBe(401);
+  });
+
+  it("200 com Bearer CRON_SECRET", async () => {
+    vi.spyOn(global, "fetch")
+      .mockImplementationOnce(async () => tokenRes())
+      .mockImplementationOnce(async () => pageRes([]));
+    const u = new URL("http://localhost/api/sync/hotmart");
+    const headers = new Headers({ authorization: `Bearer ${CRON}` });
+    const req = new NextRequest(u, { method: "GET", headers });
+    const res = await GET(req);
     expect(res.status).toBe(200);
-    expect((await res.json()).service).toBe("hotmart-sync");
   });
 });

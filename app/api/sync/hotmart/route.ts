@@ -1,11 +1,11 @@
 /**
  * Endpoint do sync de sales-history do Hotmart.
  *
- * POST com auth via CRON_SECRET (header Authorization: Bearer ...) ou
- * sessão Supabase. Aceita ?days=N (default 1, max 90). Roda inline com
- * maxDuration=60s — pra volumes maiores, mover pra Upstash queue depois.
+ * Auth via CRON_SECRET (header Authorization: Bearer ...) ou sessão Supabase.
+ * Aceita ?days=N (default 1, max 90). Roda inline com maxDuration=60s — pra
+ * volumes maiores, mover pra Upstash queue depois.
  *
- * GET sem auth devolve status pra healthcheck.
+ * GET = POST: Vercel Cron dispara via GET com Authorization header injetado.
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
@@ -41,10 +41,6 @@ function parseDays(req: NextRequest): number {
   return Math.min(n, MAX_DAYS);
 }
 
-export async function GET(_req: NextRequest) {
-  return NextResponse.json({ ok: true, service: "hotmart-sync" });
-}
-
 export async function POST(req: NextRequest) {
   if (!(await isAuthorized(req))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -59,3 +55,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }
+
+// Vercel Cron dispara via GET. Aceita o mesmo handler — auth obrigatória.
+export const GET = POST;
