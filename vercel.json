@@ -3,6 +3,10 @@
     {
       "path": "/api/sync/refresh",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/sync/hotmart",
+      "schedule": "0 6 * * *"
     }
   ]
 }
