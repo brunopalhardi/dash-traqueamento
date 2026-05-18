@@ -64,6 +64,13 @@
       "when": 1779051953349,
       "tag": "0008_drop_instagram",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1779133598821,
+      "tag": "0009_video_play_metrics",
+      "breakpoints": true
     }
   ]
 }

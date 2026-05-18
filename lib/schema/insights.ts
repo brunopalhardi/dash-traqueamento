@@ -29,8 +29,11 @@ export const adInsightsDaily = pgTable(
     frequency: numeric("frequency", { precision: 8, scale: 4 }),
     linkClicks: integer("link_clicks"),
     videoViews: integer("video_views"),
+    videoP3s: integer("video_p3s"),
+    videoP25: integer("video_p25"),
     videoP50: integer("video_p50"),
     videoP75: integer("video_p75"),
+    videoP95: integer("video_p95"),
     conversions:
       jsonb("conversions").$type<Record<string, number>>().default({}),
     createdAt: timestamp("created_at", { withTimezone: true })
