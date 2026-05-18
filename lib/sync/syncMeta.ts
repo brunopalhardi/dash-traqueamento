@@ -44,7 +44,10 @@ const MODE_TO_PRESET: Record<SyncMode, DatePreset> = {
 const SYNC_CREATIVES: Record<SyncMode, boolean> = {
   backfill: true,
   daily: false,
-  manual: false,
+  // Ativado em manual pra Bruno poder reconciliar criativos novos sob demanda
+  // (clicando "Sincronizar" no /settings/integrations). Sem isso, ads novos
+  // ficam com creative_id=NULL e thumb não aparece em /desafio.
+  manual: true,
 };
 
 interface AccountSyncResult {

@@ -1,7 +1,6 @@
 import { TrendingUp, ShoppingCart, DollarSign, Target, Activity, Users } from "lucide-react";
 import {
   getDailySeries,
-  getFunnelMetrics,
   getKpis,
   getTopAds,
   rangeCurrentCycle,
@@ -18,7 +17,6 @@ import { getWhatsappSummary } from "@/lib/queries/whatsapp";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BuyersTable } from "@/components/dashboard/buyers-table";
 import { ComparisonToggle } from "@/components/dashboard/comparison-toggle";
-import { ConversionFunnel } from "@/components/dashboard/conversion-funnel";
 import { DailyBarChart, type DailyBarPoint } from "@/components/dashboard/daily-bar-chart";
 import { fmt } from "@/components/dashboard/format";
 import { GroupPanel } from "@/components/dashboard/group-panel";
@@ -95,13 +93,12 @@ export default async function DesafioPage({
   const prevRange = rangePreviousCycle(currentRange);
 
   const [
-    kpis, funnelMeta, adsTbl, whatsapp,
+    kpis, adsTbl, whatsapp,
     purchaseCount, revenueHot, inGroup, dailyHot, dailyMeta,
     prevKpis, prevPurchaseCount, prevRevenueHot, prevDailyHot, prevDailyMeta,
     buyers,
   ] = await Promise.all([
     getKpis("desafio", currentRange),
-    getFunnelMetrics("desafio", currentRange),
     getTopAds("desafio", currentRange, { limit: 5, orderBy: "spend" }),
     getWhatsappSummary("desafio", currentRange),
     getApprovedPurchaseCount("desafio", currentRange),
@@ -196,35 +193,16 @@ export default async function DesafioPage({
         />
       </section>
 
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <Card className="bg-card border-border/60">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Funil de conversão
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ConversionFunnel
-              stages={[
-                { label: "Impressões", value: funnelMeta.impressions, format: "int" },
-                { label: "Cliques", value: funnelMeta.clicks, format: "int" },
-                { label: "Compradores", value: purchaseCount, format: "int" },
-              ]}
-            />
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border/60">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Performance diária
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DailyBarChart current={currentDaily} previous={prevDaily} />
-          </CardContent>
-        </Card>
-      </section>
+      <Card className="bg-card border-border/60 mb-6">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Performance diária
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DailyBarChart current={currentDaily} previous={prevDaily} />
+        </CardContent>
+      </Card>
 
       <Card className="bg-card border-border/60 mb-6">
         <CardHeader>

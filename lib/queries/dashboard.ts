@@ -52,6 +52,8 @@ export interface ProductBreakdownRow {
 
 export interface AdRow {
   adId: number;
+  /** ID do anúncio no Meta (pra montar link do Ad Library) */
+  metaAdId: string;
   adName: string;
   campaignName: string;
   thumbnailUrl: string | null;
@@ -391,6 +393,7 @@ export async function getTopAds(
   const rows = await db
     .select({
       adId: ads.id,
+      metaAdId: ads.metaId,
       adName: ads.name,
       campaignName: campaigns.name,
       thumbnailUrl: creatives.thumbnailUrl,
@@ -408,7 +411,7 @@ export async function getTopAds(
     .innerJoin(campaigns, eq(campaigns.id, adsets.campaignId))
     .innerJoin(adAccounts, eq(adAccounts.id, campaigns.adAccountId))
     .where(and(...conds))
-    .groupBy(ads.id, ads.name, campaigns.name, creatives.thumbnailUrl);
+    .groupBy(ads.id, ads.metaId, ads.name, campaigns.name, creatives.thumbnailUrl);
 
   const enriched: AdRow[] = rows.map((r) => {
     const spend = Number(r.spend);
@@ -416,6 +419,7 @@ export async function getTopAds(
     const revenue = Number(r.revenue);
     return {
       adId: r.adId,
+      metaAdId: r.metaAdId,
       adName: r.adName,
       campaignName: r.campaignName,
       thumbnailUrl: r.thumbnailUrl,
