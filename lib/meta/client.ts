@@ -14,6 +14,10 @@ import type {
 const RETRY_DELAYS_MS = [1000, 2000, 4000, 8000];
 const RATE_LIMIT_CODES = new Set([4, 17, 32, 80000, 80001, 80002, 80003, 80004, 80014]);
 const AUTH_ERROR_CODES = new Set([102, 190, 200, 459, 463, 464, 467]);
+// Sem timeout, um Graph travado segura a função inteira até a Vercel matar
+// em 300s — sem dar chance pro retry agir. 30s é folgado pra paginas grandes
+// e ainda permite 4 retries dentro do budget.
+const FETCH_TIMEOUT_MS = 30_000;
 
 export interface MetaClient {
   getMe(): Promise<MetaUser>;
@@ -42,9 +46,22 @@ export function createMetaClient(cfg: MetaClientConfig): MetaClient {
   async function requestUrl<T>(absoluteUrl: string): Promise<T> {
     let lastErr: unknown;
     for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
-      const res = await fetch(absoluteUrl, {
-        headers: { Authorization: `Bearer ${cfg.token}` },
-      });
+      let res: Response;
+      try {
+        res = await fetch(absoluteUrl, {
+          headers: { Authorization: `Bearer ${cfg.token}` },
+          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        });
+      } catch (err) {
+        // Timeout (AbortError) ou erro de rede — trata como retriable
+        lastErr = err;
+        if (attempt < RETRY_DELAYS_MS.length) {
+          await sleep(RETRY_DELAYS_MS[attempt]);
+          continue;
+        }
+        const msg = err instanceof Error ? err.message : String(err);
+        throw new MetaApiError(`network/timeout: ${msg}`);
+      }
       const usage = res.headers.get("x-business-use-case-usage");
       if (usage) {
         try {

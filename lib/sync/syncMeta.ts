@@ -62,6 +62,22 @@ interface SyncMetaDeps {
   client: MetaClient;
 }
 
+// Upserts sequenciais (await dentro de for-of) eram o gargalo do sync manual:
+// 1k+ creatives × ~200ms/upsert = >3min, estourava o budget de 300s da Vercel.
+// Batches paralelos resolvem sem mudar arquitetura — o pool do Supabase aguenta
+// 20 conexões simultâneas tranquilo e nenhuma chamada extra à Meta API é feita.
+const UPSERT_BATCH = 20;
+
+async function inBatches<T>(
+  items: T[],
+  batchSize: number,
+  fn: (item: T) => Promise<void>,
+): Promise<void> {
+  for (let i = 0; i < items.length; i += batchSize) {
+    await Promise.all(items.slice(i, i + batchSize).map(fn));
+  }
+}
+
 function mapCreativeType(meta: MetaCreative): "image" | "video" | "carousel" | "other" {
   const t = meta.object_type?.toUpperCase();
   if (t === "VIDEO") return "video";
@@ -262,7 +278,7 @@ export async function syncMeta(
       // status e devolve 1k+ thumbnails do account inteiro.
       if (SYNC_CREATIVES[opts.mode]) {
         const apiCreatives = await opts.client.getCreatives(actId);
-        for (const cr of apiCreatives) {
+        await inBatches(apiCreatives, UPSERT_BATCH, async (cr) => {
           await db
             .insert(creatives)
             .values({
@@ -287,7 +303,7 @@ export async function syncMeta(
               },
             });
           r.rowsByTable.creatives++;
-        }
+        });
       }
 
       // Ads
@@ -318,9 +334,9 @@ export async function syncMeta(
                 .where(inArray(creatives.metaId, referencedCreativeIds))
             ).map((row) => [row.metaId, row.id]),
       );
-      for (const a of apiAds) {
+      await inBatches(apiAds, UPSERT_BATCH, async (a) => {
         const adsetDbId = adsetIdMap.get(a.adset_id);
-        if (!adsetDbId) continue;
+        if (!adsetDbId) return;
         const creativeDbId = a.creative?.id ? creativeIdMap.get(a.creative.id) ?? null : null;
         await db
           .insert(ads)
@@ -343,7 +359,7 @@ export async function syncMeta(
             },
           });
         r.rowsByTable.ads++;
-      }
+      });
 
       // Insights
       const accountAdsetIds = Array.from(adsetIdMap.values());
@@ -359,9 +375,9 @@ export async function syncMeta(
       );
 
       const apiInsights = await opts.client.getInsights(actId, { datePreset: preset });
-      for (const ins of apiInsights) {
+      await inBatches(apiInsights, UPSERT_BATCH, async (ins) => {
         const adDbId = adIdMap.get(ins.ad_id);
-        if (!adDbId) continue;
+        if (!adDbId) return;
         const conversions = extractConversions(ins);
         const videoViews = parseVideoMetric(ins.video_play_actions, "video_view");
         const videoP3s = parseVideoMetric(ins.video_play_actions, "video_3_sec_watched_actions");
@@ -412,7 +428,7 @@ export async function syncMeta(
             },
           });
         r.rowsByTable.ad_insights_daily++;
-      }
+      });
 
       await db
         .update(adAccounts)
