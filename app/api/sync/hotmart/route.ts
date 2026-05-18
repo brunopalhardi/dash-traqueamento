@@ -12,7 +12,9 @@ import { createClient } from "@/lib/supabase/server";
 import { syncSalesHistory } from "@/lib/hotmart/sync";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+// 300s = limite do Vercel Pro. Necessário pra backfill grande (365d × ~2k vendas).
+// Cron diário (days=1) roda em poucos segundos.
+export const maxDuration = 300;
 
 const DEFAULT_DAYS = 1;
 const MAX_DAYS = 365;
