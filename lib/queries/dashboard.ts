@@ -67,6 +67,35 @@ export interface AdRow {
   cpa: number;
 }
 
+export interface AdDetail {
+  adId: number;
+  metaAdId: string;
+  adName: string;
+  campaignName: string;
+  thumbnailUrl: string | null;
+  previewShareableLink: string | null;
+  spend: number;
+  impressions: number;
+  clicks: number;
+  leads: number;
+  purchases: number;
+  revenue: number;
+  ctr: number; // %
+  cpl: number;
+  cac: number;
+  roas: number;
+  videoViews: number;
+  video3s: number;
+  video25: number;
+  video50: number;
+  video75: number;
+  video95: number;
+  hookRate: number; // %
+  holdRate: number; // %
+  bodyRate: number; // %
+  score: number; // 0-100
+}
+
 /* ─────────────────────────────────────────────────────────────────────── */
 
 function divSafe(a: number, b: number): number {
@@ -660,4 +689,104 @@ export async function getHierarchyTable(
       profit: r.revenue - r.spend,
     }))
     .sort((a, b) => b.spend - a.spend);
+}
+
+/**
+ * Retorna métricas agregadas de UM ad no período + métricas derivadas
+ * de vídeo (Hook Rate, Hold Rate, Body Rate, Score).
+ *
+ * Fórmulas:
+ *   - Hook Rate = video_p3s / impressions × 100
+ *   - Hold Rate = video_p25 / impressions × 100
+ *   - Body Rate = video_p50 / impressions × 100
+ *   - Score = (Hook × 0.3 + Hold × 0.4 + Body × 0.3)
+ */
+export async function getAdDetail(
+  adId: number,
+  range: DateRange,
+): Promise<AdDetail | null> {
+  const [row] = await db
+    .select({
+      adId: ads.id,
+      metaAdId: ads.metaId,
+      adName: ads.name,
+      campaignName: campaigns.name,
+      thumbnailUrl: creatives.thumbnailUrl,
+      previewShareableLink: ads.previewUrl,
+      spend: sql<number>`coalesce(sum(${adInsightsDaily.spend})::float, 0)`,
+      impressions: sql<number>`coalesce(sum(${adInsightsDaily.impressions})::int, 0)`,
+      clicks: sql<number>`coalesce(sum(${adInsightsDaily.clicks})::int, 0)`,
+      leads: sql<number>`coalesce(sum((${adInsightsDaily.conversions}->>'lead')::float), 0)`,
+      purchases: sql<number>`coalesce(sum((${adInsightsDaily.conversions}->>'purchase')::float), 0)`,
+      revenue: sql<number>`coalesce(sum((${adInsightsDaily.conversions}->>'revenue')::float), 0)`,
+      videoViews: sql<number>`coalesce(sum(${adInsightsDaily.videoViews})::int, 0)`,
+      video3s: sql<number>`coalesce(sum(${adInsightsDaily.videoP3s})::int, 0)`,
+      video25: sql<number>`coalesce(sum(${adInsightsDaily.videoP25})::int, 0)`,
+      video50: sql<number>`coalesce(sum(${adInsightsDaily.videoP50})::int, 0)`,
+      video75: sql<number>`coalesce(sum(${adInsightsDaily.videoP75})::int, 0)`,
+      video95: sql<number>`coalesce(sum(${adInsightsDaily.videoP95})::int, 0)`,
+    })
+    .from(adInsightsDaily)
+    .innerJoin(ads, eq(ads.id, adInsightsDaily.adId))
+    .innerJoin(adsets, eq(adsets.id, ads.adsetId))
+    .innerJoin(campaigns, eq(campaigns.id, adsets.campaignId))
+    .leftJoin(creatives, eq(creatives.id, ads.creativeId))
+    .where(
+      and(
+        eq(ads.id, adId),
+        gte(adInsightsDaily.date, range.from),
+        lte(adInsightsDaily.date, range.to),
+      ),
+    )
+    .groupBy(ads.id, ads.metaId, ads.name, ads.previewUrl, campaigns.name, creatives.thumbnailUrl);
+
+  if (!row) return null;
+
+  const impressions = Number(row.impressions);
+  const clicks = Number(row.clicks);
+  const spend = Number(row.spend);
+  const leads = Number(row.leads);
+  const purchases = Number(row.purchases);
+  const revenue = Number(row.revenue);
+  const video3s = Number(row.video3s);
+  const video25 = Number(row.video25);
+  const video50 = Number(row.video50);
+
+  const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
+  const cpl = leads > 0 ? spend / leads : 0;
+  const cac = purchases > 0 ? spend / purchases : 0;
+  const roas = spend > 0 ? revenue / spend : 0;
+  const hookRate = impressions > 0 ? (video3s / impressions) * 100 : 0;
+  const holdRate = impressions > 0 ? (video25 / impressions) * 100 : 0;
+  const bodyRate = impressions > 0 ? (video50 / impressions) * 100 : 0;
+  const score = hookRate * 0.3 + holdRate * 0.4 + bodyRate * 0.3;
+
+  return {
+    adId: row.adId,
+    metaAdId: row.metaAdId,
+    adName: row.adName,
+    campaignName: row.campaignName,
+    thumbnailUrl: row.thumbnailUrl,
+    previewShareableLink: row.previewShareableLink,
+    spend,
+    impressions,
+    clicks,
+    leads,
+    purchases,
+    revenue,
+    ctr,
+    cpl,
+    cac,
+    roas,
+    videoViews: Number(row.videoViews),
+    video3s,
+    video25,
+    video50,
+    video75: Number(row.video75),
+    video95: Number(row.video95),
+    hookRate,
+    holdRate,
+    bodyRate,
+    score,
+  };
 }
