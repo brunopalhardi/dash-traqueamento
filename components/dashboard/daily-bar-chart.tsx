@@ -40,6 +40,15 @@ function shortDate(iso: string): string {
   return `${d}/${m}`;
 }
 
+const WEEKDAYS_PT = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"] as const;
+
+// Parsing manual evita o bug clássico de `new Date("2026-05-04")` virar UTC
+// e cair no dia anterior em fusos a oeste (BR é UTC-3).
+function weekdayPt(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return WEEKDAYS_PT[new Date(y, m - 1, d).getDay()];
+}
+
 export function DailyBarChart({ current, previous }: DailyBarChartProps) {
   const [metric, setMetric] = useState<Metric>("vendas");
   const metricCfg = METRICS.find((m) => m.key === metric)!;
@@ -48,6 +57,7 @@ export function DailyBarChart({ current, previous }: DailyBarChartProps) {
   // O período anterior é exibido alinhado pelo dia-do-período (1º dia anterior = 1º dia atual).
   const merged = current.map((p, i) => ({
     date: shortDate(p.date),
+    weekday: weekdayPt(p.date),
     value: p[metric],
     prev: previous?.[i]?.[metric] ?? null,
   }));
@@ -115,9 +125,41 @@ export function DailyBarChart({ current, previous }: DailyBarChartProps) {
           <BarChart data={merged} barCategoryGap="20%">
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
+              tick={(props) => {
+                const { x, y, payload, index } = props as {
+                  x: number | string;
+                  y: number | string;
+                  payload: { value: string };
+                  index: number;
+                };
+                const wd = merged[index]?.weekday ?? "";
+                return (
+                  <g transform={`translate(${x},${y})`}>
+                    <text
+                      y={0}
+                      dy={12}
+                      textAnchor="middle"
+                      fontSize={10}
+                      fill="var(--color-muted-foreground)"
+                    >
+                      {payload.value}
+                    </text>
+                    <text
+                      y={0}
+                      dy={26}
+                      textAnchor="middle"
+                      fontSize={9}
+                      fill="var(--color-muted-foreground)"
+                      opacity={0.6}
+                    >
+                      {wd}
+                    </text>
+                  </g>
+                );
+              }}
               tickLine={false}
               axisLine={false}
+              height={36}
             />
             <YAxis
               tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
