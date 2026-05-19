@@ -58,6 +58,8 @@ export interface MetaCreative {
   id: string;
   name?: string;
   thumbnail_url?: string;
+  /** Alta resolução — original do criativo (poster pra vídeo). Preferido a thumbnail_url. */
+  image_url?: string;
   video_id?: string;
   object_type?: string; // "VIDEO" | "PHOTO" | "SHARE" | ...
   title?: string;

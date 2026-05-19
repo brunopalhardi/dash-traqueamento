@@ -279,13 +279,15 @@ export async function syncMeta(
       if (SYNC_CREATIVES[opts.mode]) {
         const apiCreatives = await opts.client.getCreatives(actId);
         await inBatches(apiCreatives, UPSERT_BATCH, async (cr) => {
+          // image_url quando disponível (alta res); thumbnail_url{400x400} de fallback.
+          const thumb = cr.image_url ?? cr.thumbnail_url;
           await db
             .insert(creatives)
             .values({
               metaId: cr.id,
               name: cr.name,
               type: mapCreativeType(cr),
-              thumbnailUrl: cr.thumbnail_url,
+              thumbnailUrl: thumb,
               headline: cr.title,
               body: cr.body,
               callToAction: cr.call_to_action_type,
@@ -295,7 +297,7 @@ export async function syncMeta(
               set: {
                 name: cr.name,
                 type: mapCreativeType(cr),
-                thumbnailUrl: cr.thumbnail_url,
+                thumbnailUrl: thumb,
                 headline: cr.title,
                 body: cr.body,
                 callToAction: cr.call_to_action_type,

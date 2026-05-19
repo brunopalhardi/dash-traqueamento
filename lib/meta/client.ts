@@ -168,7 +168,12 @@ export function createMetaClient(cfg: MetaClientConfig): MetaClient {
       }),
     getCreatives: (accountId) =>
       paginate<MetaCreative>(`/${accountId}/adcreatives`, {
-        fields: "id,name,thumbnail_url,video_id,object_type,title,body,call_to_action_type",
+        // image_url devolve a original (alta res). thumbnail_url{w,h}=400 é
+        // fallback pra criativos sem image_url — sem isso o Meta entrega 64x64.
+        fields:
+          "id,name,thumbnail_url,image_url,video_id,object_type,title,body,call_to_action_type",
+        thumbnail_width: "400",
+        thumbnail_height: "400",
         limit: "200",
       }),
     getInsights: (accountId, opts) =>

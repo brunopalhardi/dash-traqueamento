@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { ChevronRight, RefreshCw, LogOut } from "lucide-react";
@@ -15,16 +16,32 @@ const LABELS: Record<string, string> = {
   integrations: "Integrações",
 };
 
-function breadcrumbsFrom(pathname: string): string[] {
+interface Crumb {
+  label: string;
+  href: string | null; // null = não-clicável (último ou segmento desconhecido)
+}
+
+function breadcrumbsFrom(pathname: string): Crumb[] {
   const segs = pathname.split("/").filter(Boolean);
-  if (segs.length === 0) return ["Visão Geral"];
-  return segs.map((s) => LABELS[s] ?? s.replace(/-/g, " "));
+  if (segs.length === 0) return [{ label: "Visão Geral", href: null }];
+  return segs.map((s, i) => {
+    const isLast = i === segs.length - 1;
+    const known = s in LABELS;
+    const label = LABELS[s] ?? s.replace(/-/g, " ");
+    // só liga em segmentos conhecidos que tenham rota real (evita "criativo"
+    // virar link pra /desafio/criativo, que não existe)
+    const href = known && !isLast ? "/" + segs.slice(0, i + 1).join("/") : null;
+    return { label, href };
+  });
 }
 
 export function Topbar({ userEmail }: { userEmail: string }) {
   const pathname = usePathname();
   const router = useRouter();
-  const crumbs = ["OBA - Tráfego", ...breadcrumbsFrom(pathname)];
+  const crumbs: Crumb[] = [
+    { label: "OBA - Tráfego", href: pathname === "/" ? null : "/" },
+    ...breadcrumbsFrom(pathname),
+  ];
   const [syncing, setSyncing] = useState(false);
 
   async function handleSync() {
@@ -59,22 +76,29 @@ export function Topbar({ userEmail }: { userEmail: string }) {
   return (
     <header className="h-14 border-b border-border flex items-center justify-between px-6 bg-background sticky top-0 z-10">
       <nav className="flex items-center gap-2 text-sm">
-        {crumbs.map((c, i) => (
-          <span key={i} className="flex items-center gap-2">
-            <span
-              className={cn(
-                i === crumbs.length - 1
-                  ? "text-foreground font-medium"
-                  : "text-muted-foreground",
+        {crumbs.map((c, i) => {
+          const isLast = i === crumbs.length - 1;
+          const baseCls = isLast
+            ? "text-foreground font-medium"
+            : "text-muted-foreground";
+          return (
+            <span key={i} className="flex items-center gap-2">
+              {c.href ? (
+                <Link
+                  href={c.href}
+                  className={cn(baseCls, "hover:text-foreground transition-colors")}
+                >
+                  {c.label}
+                </Link>
+              ) : (
+                <span className={baseCls}>{c.label}</span>
               )}
-            >
-              {c}
+              {!isLast ? (
+                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+              ) : null}
             </span>
-            {i < crumbs.length - 1 ? (
-              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
-            ) : null}
-          </span>
-        ))}
+          );
+        })}
       </nav>
 
       <div className="flex items-center gap-2">
