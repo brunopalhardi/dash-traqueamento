@@ -25,7 +25,12 @@ export interface MetaClient {
   getCampaigns(accountId: string): Promise<MetaCampaign[]>;
   getAdSets(accountId: string): Promise<MetaAdSet[]>;
   getAds(accountId: string): Promise<MetaAd[]>;
-  getCreatives(accountId: string): Promise<MetaCreative[]>;
+  /**
+   * Busca criativos por ID em batches via endpoint `GET ?ids=id1,id2,…`.
+   * Preferido a getCreatives — scan completo de /adcreatives retorna histórico
+   * inteiro do account (10k+ orphans), torna o sync inviável.
+   */
+  getCreativesByIds(ids: string[]): Promise<MetaCreative[]>;
   getInsights(
     accountId: string,
     opts: { datePreset: DatePreset },
@@ -166,16 +171,33 @@ export function createMetaClient(cfg: MetaClientConfig): MetaClient {
         effective_status: STATUS_PARAM,
         limit: "200",
       }),
-    getCreatives: (accountId) =>
-      paginate<MetaCreative>(`/${accountId}/adcreatives`, {
-        // image_url devolve a original (alta res). thumbnail_url é fallback
-        // pequeno (64x64 default) — NÃO usar thumbnail_width/height porque
-        // força Meta a regerar thumbnail por criativo, estourava 300s da
-        // Vercel com 1k+ criativos (commit a4ee2cb causou 504).
-        fields:
-          "id,name,thumbnail_url,image_url,video_id,object_type,title,body,call_to_action_type",
-        limit: "200",
-      }),
+    getCreativesByIds: async (ids) => {
+      if (ids.length === 0) return [];
+      // Meta aceita até 50 IDs por call no endpoint root `?ids=`. Devolve
+      // objeto {id1: {...}, id2: {...}}. Buscar só os criativos REFERENCIADOS
+      // por ads ativos evita o scan de 10k+ orphans históricos do account.
+      const BATCH = 50;
+      const PARALLEL = 5;
+      const batches: string[][] = [];
+      for (let i = 0; i < ids.length; i += BATCH) {
+        batches.push(ids.slice(i, i + BATCH));
+      }
+      const out: MetaCreative[] = [];
+      for (let i = 0; i < batches.length; i += PARALLEL) {
+        const chunk = batches.slice(i, i + PARALLEL);
+        const results = await Promise.all(
+          chunk.map((idsBatch) =>
+            request<Record<string, MetaCreative>>("/", {
+              ids: idsBatch.join(","),
+              fields:
+                "id,name,thumbnail_url,image_url,video_id,object_type,title,body,call_to_action_type",
+            }),
+          ),
+        );
+        for (const obj of results) out.push(...Object.values(obj));
+      }
+      return out;
+    },
     getInsights: (accountId, opts) =>
       paginate<MetaInsight>(`/${accountId}/insights`, {
         level: "ad",

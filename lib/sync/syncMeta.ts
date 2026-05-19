@@ -36,19 +36,10 @@ const MODE_TO_PRESET: Record<SyncMode, DatePreset> = {
   manual: "last_30d",
 };
 
-/**
- * `getCreatives` retorna 1k+ thumbnails do account inteiro (sem filtro por
- * status), o que dominava o tempo do sync no Vercel. Pulamos no daily/manual
- * e só rodamos no backfill — thumbnails antigas ficam até o backfill rodar.
- */
-const SYNC_CREATIVES: Record<SyncMode, boolean> = {
-  backfill: true,
-  daily: false,
-  // Ativado em manual pra Bruno poder reconciliar criativos novos sob demanda
-  // (clicando "Sincronizar" no /settings/integrations). Sem isso, ads novos
-  // ficam com creative_id=NULL e thumb não aparece em /desafio.
-  manual: true,
-};
+// Removido SYNC_CREATIVES gating — antes pulávamos creatives no daily/manual
+// porque scan completo de /adcreatives era lento demais (10k+ orphans
+// históricos do account). Agora usamos getCreativesByIds só com os criativos
+// REFERENCIADOS por ads ativos (~100-500), então sempre roda em todo modo.
 
 interface AccountSyncResult {
   accountId: number;
@@ -274,40 +265,6 @@ export async function syncMeta(
         r.rowsByTable.adsets++;
       }
 
-      // Creatives — pulamos no daily/manual; o endpoint não tem filtro por
-      // status e devolve 1k+ thumbnails do account inteiro.
-      if (SYNC_CREATIVES[opts.mode]) {
-        const apiCreatives = await opts.client.getCreatives(actId);
-        await inBatches(apiCreatives, UPSERT_BATCH, async (cr) => {
-          // image_url quando disponível (alta res); thumbnail_url{400x400} de fallback.
-          const thumb = cr.image_url ?? cr.thumbnail_url;
-          await db
-            .insert(creatives)
-            .values({
-              metaId: cr.id,
-              name: cr.name,
-              type: mapCreativeType(cr),
-              thumbnailUrl: thumb,
-              headline: cr.title,
-              body: cr.body,
-              callToAction: cr.call_to_action_type,
-            })
-            .onConflictDoUpdate({
-              target: creatives.metaId,
-              set: {
-                name: cr.name,
-                type: mapCreativeType(cr),
-                thumbnailUrl: thumb,
-                headline: cr.title,
-                body: cr.body,
-                callToAction: cr.call_to_action_type,
-                updatedAt: new Date(),
-              },
-            });
-          r.rowsByTable.creatives++;
-        });
-      }
-
       // Ads
       const accountCampaignIds = Array.from(campaignIdMap.values());
       const adsetIdMap = new Map<string, number>(
@@ -323,9 +280,46 @@ export async function syncMeta(
 
       const apiAds = await opts.client.getAds(actId);
 
-      const referencedCreativeIds = apiAds
-        .map((a) => a.creative?.id)
-        .filter((id): id is string => typeof id === "string");
+      // Buscar só os criativos REFERENCIADOS pelos ads ativos via
+      // /?ids=… batched. Evita scan de 10k+ orphans históricos do account.
+      const referencedCreativeIds = Array.from(
+        new Set(
+          apiAds
+            .map((a) => a.creative?.id)
+            .filter((id): id is string => typeof id === "string"),
+        ),
+      );
+
+      const apiCreatives = await opts.client.getCreativesByIds(referencedCreativeIds);
+      await inBatches(apiCreatives, UPSERT_BATCH, async (cr) => {
+        // image_url quando disponível (alta res); thumbnail_url default de fallback.
+        const thumb = cr.image_url ?? cr.thumbnail_url;
+        await db
+          .insert(creatives)
+          .values({
+            metaId: cr.id,
+            name: cr.name,
+            type: mapCreativeType(cr),
+            thumbnailUrl: thumb,
+            headline: cr.title,
+            body: cr.body,
+            callToAction: cr.call_to_action_type,
+          })
+          .onConflictDoUpdate({
+            target: creatives.metaId,
+            set: {
+              name: cr.name,
+              type: mapCreativeType(cr),
+              thumbnailUrl: thumb,
+              headline: cr.title,
+              body: cr.body,
+              callToAction: cr.call_to_action_type,
+              updatedAt: new Date(),
+            },
+          });
+        r.rowsByTable.creatives++;
+      });
+
       const creativeIdMap = new Map<string, number>(
         referencedCreativeIds.length === 0
           ? []
