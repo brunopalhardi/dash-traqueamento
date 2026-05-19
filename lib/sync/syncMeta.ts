@@ -4,7 +4,7 @@ import { adAccounts, campaigns, adsets, ads, creatives } from "@/lib/schema/meta
 import { adInsightsDaily } from "@/lib/schema/insights";
 import { syncJobs } from "@/lib/schema/sync";
 import type { MetaClient } from "@/lib/meta/client";
-import type { DatePreset, MetaCreative, MetaInsight } from "@/lib/meta/types";
+import type { DatePreset, MetaCreative, MetaInsight, MetaInsightAction } from "@/lib/meta/types";
 import { MetaAuthError } from "@/lib/meta/errors";
 
 /**
@@ -108,23 +108,24 @@ function pickByPriority(
 }
 
 /**
- * Extrai uma métrica de video_play_actions[] do Meta pelo action_type.
- * Meta retorna como [{ action_type: "video_view", value: "1234" }, ...].
- * Os action_types relevantes:
- *   - video_view (views totais)
- *   - video_3_sec_watched_actions
- *   - video_p25_watched_actions
- *   - video_p50_watched_actions
- *   - video_p75_watched_actions
- *   - video_p95_watched_actions
+ * `video_play_actions` é um campo cujo array contém só action_types "video_view"
+ * e "video_play_curve" — usar pra videoViews.
+ *
+ * Já as métricas de % assistido (p25/p50/p75/p95) e 3-sec são **fields top-level
+ * separados** do insight, cada um com seu próprio array. Action_type interno é
+ * "video_view" — somar values.
+ *
+ * Aprendizado: na 1ª versão eu assumi que tudo estava dentro de video_play_actions
+ * e fui buscar pelo nome do field como se fosse action_type. Resultado: zerado.
  */
-function parseVideoMetric(
-  actions: MetaInsight["video_play_actions"] | undefined,
-  actionType: string,
-): number | null {
+function findVideoView(actions: MetaInsightAction[] | undefined): number | null {
   if (!actions) return null;
-  const found = actions.find((a) => a.action_type === actionType);
-  if (!found) return null;
+  const found = actions.find((a) => a.action_type === "video_view");
+  if (!found) {
+    // Fallback: alguns accounts retornam outras action_types — soma tudo
+    const total = actions.reduce((sum, a) => sum + Number(a.value || 0), 0);
+    return Number.isFinite(total) && total > 0 ? total : null;
+  }
   const n = Number(found.value);
   return Number.isFinite(n) ? n : null;
 }
@@ -375,12 +376,12 @@ export async function syncMeta(
         const adDbId = adIdMap.get(ins.ad_id);
         if (!adDbId) return;
         const conversions = extractConversions(ins);
-        const videoViews = parseVideoMetric(ins.video_play_actions, "video_view");
-        const videoP3s = parseVideoMetric(ins.video_play_actions, "video_3_sec_watched_actions");
-        const videoP25 = parseVideoMetric(ins.video_play_actions, "video_p25_watched_actions");
-        const videoP50 = parseVideoMetric(ins.video_play_actions, "video_p50_watched_actions");
-        const videoP75 = parseVideoMetric(ins.video_play_actions, "video_p75_watched_actions");
-        const videoP95 = parseVideoMetric(ins.video_play_actions, "video_p95_watched_actions");
+        const videoViews = findVideoView(ins.video_play_actions);
+        const videoP3s = findVideoView(ins.video_3_sec_watched_actions);
+        const videoP25 = findVideoView(ins.video_p25_watched_actions);
+        const videoP50 = findVideoView(ins.video_p50_watched_actions);
+        const videoP75 = findVideoView(ins.video_p75_watched_actions);
+        const videoP95 = findVideoView(ins.video_p95_watched_actions);
         await db
           .insert(adInsightsDaily)
           .values({

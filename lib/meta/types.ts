@@ -86,6 +86,13 @@ export interface MetaInsight {
   frequency?: string;
   inline_link_clicks?: string;
   video_play_actions?: MetaInsightAction[];
+  // Fields top-level (não estão dentro de video_play_actions). Cada um é array
+  // de actions onde action_type costuma ser "video_view". Somar todos os values.
+  video_3_sec_watched_actions?: MetaInsightAction[];
+  video_p25_watched_actions?: MetaInsightAction[];
+  video_p50_watched_actions?: MetaInsightAction[];
+  video_p75_watched_actions?: MetaInsightAction[];
+  video_p95_watched_actions?: MetaInsightAction[];
   actions?: MetaInsightAction[];
   action_values?: MetaInsightAction[];
 }
