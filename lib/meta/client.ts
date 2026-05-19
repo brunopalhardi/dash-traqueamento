@@ -168,12 +168,12 @@ export function createMetaClient(cfg: MetaClientConfig): MetaClient {
       }),
     getCreatives: (accountId) =>
       paginate<MetaCreative>(`/${accountId}/adcreatives`, {
-        // image_url devolve a original (alta res). thumbnail_url{w,h}=400 é
-        // fallback pra criativos sem image_url — sem isso o Meta entrega 64x64.
+        // image_url devolve a original (alta res). thumbnail_url é fallback
+        // pequeno (64x64 default) — NÃO usar thumbnail_width/height porque
+        // força Meta a regerar thumbnail por criativo, estourava 300s da
+        // Vercel com 1k+ criativos (commit a4ee2cb causou 504).
         fields:
           "id,name,thumbnail_url,image_url,video_id,object_type,title,body,call_to_action_type",
-        thumbnail_width: "400",
-        thumbnail_height: "400",
         limit: "200",
       }),
     getInsights: (accountId, opts) =>
