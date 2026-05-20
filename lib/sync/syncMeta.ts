@@ -377,7 +377,11 @@ export async function syncMeta(
         if (!adDbId) return;
         const conversions = extractConversions(ins);
         const videoViews = findVideoView(ins.video_play_actions);
-        const videoP3s = findVideoView(ins.video_3_sec_watched_actions);
+        // video_3_sec_views vem como string number direto (não array de actions)
+        const videoP3s =
+          ins.video_3_sec_views != null && Number.isFinite(Number(ins.video_3_sec_views))
+            ? Number(ins.video_3_sec_views)
+            : null;
         const videoP25 = findVideoView(ins.video_p25_watched_actions);
         const videoP50 = findVideoView(ins.video_p50_watched_actions);
         const videoP75 = findVideoView(ins.video_p75_watched_actions);

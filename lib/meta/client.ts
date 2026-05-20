@@ -216,11 +216,13 @@ export function createMetaClient(cfg: MetaClientConfig): MetaClient {
         level: "ad",
         time_increment: "1",
         date_preset: opts.datePreset,
-        // video_3_sec/p25/p50/p75/p95_watched_actions são fields top-level
-        // (NÃO action_types dentro de video_play_actions). Sem pedi-los aqui,
-        // o Meta não retorna e as colunas correspondentes ficam NULL.
+        // video_3_sec_views (string) + p25/p50/p75/p95_watched_actions (arrays)
+        // são fields top-level (NÃO action_types dentro de video_play_actions).
+        // Atenção: `video_3_sec_watched_actions` (array) foi renomeado pra
+        // `video_3_sec_views` (string) em versões recentes — usar a nova
+        // (erro #100 "is not valid for fields param" em v25 confirmou).
         fields:
-          "ad_id,date_start,date_stop,spend,impressions,clicks,ctr,cpc,cpm,reach,frequency,inline_link_clicks,actions,action_values,video_play_actions,video_3_sec_watched_actions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p95_watched_actions",
+          "ad_id,date_start,date_stop,spend,impressions,clicks,ctr,cpc,cpm,reach,frequency,inline_link_clicks,actions,action_values,video_play_actions,video_3_sec_views,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p95_watched_actions",
         filtering: INSIGHTS_FILTER,
         limit: "500",
       }),
