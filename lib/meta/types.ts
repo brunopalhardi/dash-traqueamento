@@ -85,12 +85,13 @@ export interface MetaInsight {
   reach?: string;
   frequency?: string;
   inline_link_clicks?: string;
+  // video_play_actions contém action_type "video_view" cujo valor JÁ É o
+  // 3-sec view count (definição da Meta: "video view" = ≥3 segundos).
+  // Não existe field separado tipo "video_3_sec_views" — confirmado no SDK
+  // oficial do Facebook (facebook-python-business-sdk/adsinsights.py).
   video_play_actions?: MetaInsightAction[];
-  // 3-sec foi renomeado em versões recentes da Meta API (v22+):
-  // `video_3_sec_watched_actions` (array) → `video_3_sec_views` (string number)
-  video_3_sec_views?: string;
-  // Percentis continuam como arrays de actions (action_type costuma ser
-  // "video_view"). Não confundir com video_play_actions, que é outro field.
+  // Percentis SÃO fields top-level (arrays de actions com action_type
+  // "video_view"). Confirmados válidos na v25 via Python SDK oficial.
   video_p25_watched_actions?: MetaInsightAction[];
   video_p50_watched_actions?: MetaInsightAction[];
   video_p75_watched_actions?: MetaInsightAction[];

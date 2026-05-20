@@ -376,12 +376,11 @@ export async function syncMeta(
         const adDbId = adIdMap.get(ins.ad_id);
         if (!adDbId) return;
         const conversions = extractConversions(ins);
+        // Meta define "video view" = ≥3 segundos. Então videoViews E videoP3s
+        // vêm do MESMO campo: action_type "video_view" em video_play_actions.
+        // Hook Rate = video_p3s / impressions usa esse valor.
         const videoViews = findVideoView(ins.video_play_actions);
-        // video_3_sec_views vem como string number direto (não array de actions)
-        const videoP3s =
-          ins.video_3_sec_views != null && Number.isFinite(Number(ins.video_3_sec_views))
-            ? Number(ins.video_3_sec_views)
-            : null;
+        const videoP3s = videoViews;
         const videoP25 = findVideoView(ins.video_p25_watched_actions);
         const videoP50 = findVideoView(ins.video_p50_watched_actions);
         const videoP75 = findVideoView(ins.video_p75_watched_actions);
