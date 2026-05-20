@@ -449,13 +449,23 @@ export async function syncMeta(
   const allFailed = results.length > 0 && results.every((r) => r.error);
   const status: "done" | "failed" = allFailed ? "failed" : "done";
 
+  // Concatena os erros reais por account no errorMessage — antes era só
+  // "see details" e não tinha onde ver os details na UI.
+  const errorSummary = anyFailed
+    ? results
+        .filter((r) => r.error)
+        .map((r) => `${r.metaAccountId}: ${r.error}`)
+        .join(" | ")
+        .slice(0, 500)
+    : null;
+
   await db
     .update(syncJobs)
     .set({
       status,
       finishedAt: new Date(),
       rowsProcessed: totalRows,
-      errorMessage: anyFailed ? "see details" : null,
+      errorMessage: errorSummary,
       details: { mode: opts.mode, results } as Record<string, unknown>,
     })
     .where(eq(syncJobs.id, job.id));

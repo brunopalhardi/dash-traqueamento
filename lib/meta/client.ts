@@ -185,7 +185,9 @@ export function createMetaClient(cfg: MetaClientConfig): MetaClient {
       const out: MetaCreative[] = [];
       for (let i = 0; i < batches.length; i += PARALLEL) {
         const chunk = batches.slice(i, i + PARALLEL);
-        const results = await Promise.all(
+        // allSettled: se um batch falha (ex.: 1 ID inválido), os outros seguem.
+        // Antes era Promise.all → 1 erro travava tudo e o sync inteiro falhava.
+        const results = await Promise.allSettled(
           chunk.map((idsBatch) =>
             request<Record<string, MetaCreative>>("/", {
               ids: idsBatch.join(","),
@@ -194,7 +196,18 @@ export function createMetaClient(cfg: MetaClientConfig): MetaClient {
             }),
           ),
         );
-        for (const obj of results) out.push(...Object.values(obj));
+        for (const r of results) {
+          if (r.status === "fulfilled") {
+            out.push(...Object.values(r.value));
+          } else {
+            console.warn(
+              JSON.stringify({
+                msg: "getCreativesByIds_batch_failed",
+                error: r.reason instanceof Error ? r.reason.message : String(r.reason),
+              }),
+            );
+          }
+        }
       }
       return out;
     },
