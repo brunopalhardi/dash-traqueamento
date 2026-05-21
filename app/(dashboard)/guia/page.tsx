@@ -3,9 +3,9 @@ import {
   getDailySeries,
   getKpis,
   getTopAds,
-  rangeCurrentCycle,
   rangePreviousCycle,
 } from "@/lib/queries/dashboard";
+import { parseRangeFromSearchParams } from "@/lib/utils/date-ranges";
 import {
   getApprovedPurchaseCount,
   getApprovedPurchaseRevenue,
@@ -26,23 +26,6 @@ import type { DailyPurchasePoint } from "@/lib/queries/purchases";
 
 export const dynamic = "force-dynamic";
 
-const DEFAULT_CYCLE = 30;
-
-function parseRange(sp: { cycle?: string; start?: string; end?: string }) {
-  const custom =
-    sp.start && sp.end && /^\d{4}-\d{2}-\d{2}$/.test(sp.start) && /^\d{4}-\d{2}-\d{2}$/.test(sp.end)
-      ? { start: sp.start, end: sp.end }
-      : undefined;
-  if (custom) {
-    const days = Math.round(
-      (new Date(custom.end + "T00:00:00").getTime() -
-        new Date(custom.start + "T00:00:00").getTime()) / 86_400_000,
-    ) + 1;
-    return { cycleDays: Math.max(1, days), custom };
-  }
-  const n = Number(sp.cycle ?? DEFAULT_CYCLE);
-  return { cycleDays: Number.isFinite(n) && n > 0 ? n : DEFAULT_CYCLE, custom: undefined };
-}
 
 function buildDailyPoints(
   range: DateRange,
@@ -80,13 +63,11 @@ function deltaOf(curr: number, prev: number): { label: string; positive: boolean
 export default async function GuiaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cycle?: string; start?: string; end?: string; compare?: string }>;
+  searchParams: Promise<{ preset?: string; cycle?: string; start?: string; end?: string; compare?: string }>;
 }) {
   const sp = await searchParams;
-  const { cycleDays, custom } = parseRange(sp);
+  const { range: currentRange, label: rangeLabel } = parseRangeFromSearchParams(sp);
   const compare = sp.compare === "1";
-
-  const currentRange = rangeCurrentCycle(cycleDays, custom);
   const prevRange = rangePreviousCycle(currentRange);
 
   const [
@@ -120,9 +101,7 @@ export default async function GuiaPage({
   const prevRoas = compare && prevKpis && prevKpis.spend > 0 ? prevRevenueHot / prevKpis.spend : 0;
   const prevTicket = compare && prevPurchaseCount > 0 ? prevRevenueHot / prevPurchaseCount : 0;
 
-  const subtitle = custom
-    ? `Custom · ${fmt.shortDate(currentRange.from)} → ${fmt.shortDate(currentRange.to)} (${cycleDays} dias)`
-    : `Últimos ${cycleDays} dias · ${fmt.shortDate(currentRange.from)} → ${fmt.shortDate(currentRange.to)}`;
+  const subtitle = `${rangeLabel} · ${fmt.shortDate(currentRange.from)} → ${fmt.shortDate(currentRange.to)}`;
 
   return (
     <>
@@ -133,7 +112,7 @@ export default async function GuiaPage({
         right={
           <div className="flex items-center gap-2">
             <ComparisonToggle />
-            <PeriodSelector defaultCycle={DEFAULT_CYCLE} />
+            <PeriodSelector />
           </div>
         }
       />

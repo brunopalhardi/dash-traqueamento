@@ -1,43 +1,25 @@
 import { notFound } from "next/navigation";
-import { getAdDetail, getTopAds, rangeCurrentCycle } from "@/lib/queries/dashboard";
+import { getAdDetail, getTopAds } from "@/lib/queries/dashboard";
+import { parseRangeFromSearchParams } from "@/lib/utils/date-ranges";
 import { CreativeList } from "@/components/dashboard/creative-list";
 import { CreativeDetailEmpty, CreativeDetailPanel } from "@/components/dashboard/creative-detail-panel";
 import { PageHeader } from "@/components/dashboard/page-header";
 
 export const dynamic = "force-dynamic";
 
-const DEFAULT_CYCLE = 30;
-
-function parseCycle(sp: { cycle?: string; start?: string; end?: string }) {
-  const custom =
-    sp.start && sp.end && /^\d{4}-\d{2}-\d{2}$/.test(sp.start) && /^\d{4}-\d{2}-\d{2}$/.test(sp.end)
-      ? { start: sp.start, end: sp.end }
-      : undefined;
-  if (custom) {
-    const days = Math.round(
-      (new Date(custom.end + "T00:00:00").getTime() -
-        new Date(custom.start + "T00:00:00").getTime()) / 86_400_000,
-    ) + 1;
-    return { cycleDays: Math.max(1, days), custom };
-  }
-  const n = Number(sp.cycle ?? DEFAULT_CYCLE);
-  return { cycleDays: Number.isFinite(n) && n > 0 ? n : DEFAULT_CYCLE, custom: undefined };
-}
-
 export default async function DesafioCreativeDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ adId: string }>;
-  searchParams: Promise<{ cycle?: string; start?: string; end?: string }>;
+  searchParams: Promise<{ preset?: string; cycle?: string; start?: string; end?: string }>;
 }) {
   const { adId: adIdRaw } = await params;
   const adId = Number(adIdRaw);
   if (!Number.isFinite(adId)) notFound();
 
   const sp = await searchParams;
-  const { cycleDays, custom } = parseCycle(sp);
-  const range = rangeCurrentCycle(cycleDays, custom);
+  const { range } = parseRangeFromSearchParams(sp);
 
   const [detail, ranking] = await Promise.all([
     getAdDetail(adId, range),
