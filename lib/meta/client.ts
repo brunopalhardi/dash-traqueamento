@@ -191,8 +191,17 @@ export function createMetaClient(cfg: MetaClientConfig): MetaClient {
           chunk.map((idsBatch) =>
             request<Record<string, MetaCreative>>("/", {
               ids: idsBatch.join(","),
+              // image_url devolve original pra criativos de imagem; pra vídeo
+              // costuma vir null e Meta cai pra thumbnail_url. Sem
+              // thumbnail_width Meta entrega 64x64 default (URL tem
+              // "p64x64" no stp). 400x400 dá quality decente sem estourar.
+              // O risco de "regen sob demanda" que causou 504 antes só
+              // existia no scan completo de /adcreatives (10k+ itens) —
+              // aqui são ~500 referenciados por ads ativos, cabe tranquilo.
               fields:
                 "id,name,thumbnail_url,image_url,video_id,object_type,title,body,call_to_action_type",
+              thumbnail_width: "400",
+              thumbnail_height: "400",
             }),
           ),
         );
