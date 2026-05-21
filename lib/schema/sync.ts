@@ -20,6 +20,8 @@ export const syncJobType = pgEnum("sync_job_type", [
   "hotmart_replay",
   "match_recompute",
   "ping",
+  "sendflow_sync",
+  "hotmart_backfill_phones",
 ]);
 
 export const syncJobStatus = pgEnum("sync_job_status", [

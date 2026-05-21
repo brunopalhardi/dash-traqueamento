@@ -6,6 +6,7 @@ import {
   timestamp,
   jsonb,
   boolean,
+  integer,
   pgEnum,
   uniqueIndex,
   index,
@@ -36,6 +37,12 @@ export const whatsappGroups = pgTable(
     productSlug: text("product_slug"),
     /** Identificador do ciclo (ex.: "2026-05") — opcional */
     cycleLabel: text("cycle_label"),
+    /** Campos populados pela sync REST do SendFlow (não vêm pelo webhook). */
+    sendflowReleaseExternalId: text("sendflow_release_external_id"),
+    waJid: text("wa_jid"),
+    inviteCode: text("invite_code"),
+    participantsAmount: integer("participants_amount"),
+    isFull: boolean("is_full"),
     firstSeenAt: timestamp("first_seen_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -49,6 +56,7 @@ export const whatsappGroups = pgTable(
   (t) => [
     uniqueIndex("whatsapp_groups_external_id_uq").on(t.externalId),
     index("whatsapp_groups_product_idx").on(t.productSlug),
+    index("whatsapp_groups_sendflow_release_idx").on(t.sendflowReleaseExternalId),
   ],
 );
 
