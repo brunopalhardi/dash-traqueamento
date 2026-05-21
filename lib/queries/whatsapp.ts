@@ -6,7 +6,7 @@
  * configurado; senão mostra todos os grupos (Bruno preenche product_slug
  * via SQL ou futura UI).
  */
-import { and, eq, gte, lte, sql, ilike, or } from "drizzle-orm";
+import { and, eq, gte, inArray, lte, sql, ilike, or } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   whatsappGroups,
@@ -88,7 +88,7 @@ export async function getWhatsappSummary(
       count: sql<number>`count(*) filter (where ${whatsappGroupMembers.currentlyInGroup})::int`,
     })
     .from(whatsappGroupMembers)
-    .where(sql`${whatsappGroupMembers.groupExternalId} = ANY(${externalIds})`)
+    .where(inArray(whatsappGroupMembers.groupExternalId, externalIds))
     .groupBy(whatsappGroupMembers.groupExternalId);
 
   const memberCountByGroup = new Map(
@@ -105,7 +105,7 @@ export async function getWhatsappSummary(
     .from(whatsappGroupEvents)
     .where(
       and(
-        sql`${whatsappGroupEvents.groupExternalId} = ANY(${externalIds})`,
+        inArray(whatsappGroupEvents.groupExternalId, externalIds),
         gte(whatsappGroupEvents.occurredAt, from),
         lte(whatsappGroupEvents.occurredAt, to),
       ),
@@ -129,7 +129,7 @@ export async function getWhatsappSummary(
     .from(whatsappGroupEvents)
     .where(
       and(
-        sql`${whatsappGroupEvents.groupExternalId} = ANY(${externalIds})`,
+        inArray(whatsappGroupEvents.groupExternalId, externalIds),
         gte(whatsappGroupEvents.occurredAt, from),
         lte(whatsappGroupEvents.occurredAt, to),
       ),
