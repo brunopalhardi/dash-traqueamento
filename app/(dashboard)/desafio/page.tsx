@@ -13,13 +13,13 @@ import {
   getDailyPurchaseSeries,
   getInGroupStats,
 } from "@/lib/queries/purchases";
-import { getWhatsappSummary } from "@/lib/queries/whatsapp";
+import { getSendflowGroupSummary } from "@/lib/queries/sendflow";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BuyersTable } from "@/components/dashboard/buyers-table";
 import { ComparisonToggle } from "@/components/dashboard/comparison-toggle";
 import { DailyBarChart, type DailyBarPoint } from "@/components/dashboard/daily-bar-chart";
 import { fmt } from "@/components/dashboard/format";
-import { GroupPanel } from "@/components/dashboard/group-panel";
+import { SendflowGroupPanel } from "@/components/dashboard/sendflow-group-panel";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { PeriodSelector } from "@/components/dashboard/period-selector";
@@ -74,14 +74,14 @@ export default async function DesafioPage({
   const prevRange = rangePreviousCycle(currentRange);
 
   const [
-    kpis, adsTbl, whatsapp,
+    kpis, adsTbl, sendflowSummary,
     purchaseCount, revenueHot, inGroup, dailyHot, dailyMeta,
     prevKpis, prevPurchaseCount, prevRevenueHot, prevDailyHot, prevDailyMeta,
     buyers,
   ] = await Promise.all([
     getKpis("desafio", currentRange),
     getTopAds("desafio", currentRange, { limit: 5, orderBy: "spend" }),
-    getWhatsappSummary("desafio", currentRange),
+    getSendflowGroupSummary(currentRange),
     getApprovedPurchaseCount("desafio", currentRange),
     getApprovedPurchaseRevenue("desafio", currentRange),
     getInGroupStats("desafio", currentRange),
@@ -212,7 +212,7 @@ export default async function DesafioPage({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <GroupPanel data={whatsapp} />
+          <SendflowGroupPanel data={sendflowSummary} />
         </CardContent>
       </Card>
     </>
