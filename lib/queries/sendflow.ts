@@ -171,7 +171,9 @@ export async function getSendflowGroupSummary(
       )
       .where(eq(sendflowLeadscoring.releaseId, liveRelease.id))
       .orderBy(desc(sendflowLeadscoring.score))
-      .limit(20);
+      // 500 cobre toda a release sem custo relevante e permite que o botão
+      // "Exportar CSV" leve a lista completa, enquanto a UI mostra só os 20.
+      .limit(500);
 
     // LEFT JOIN com purchases pode duplicar leads (1 phone com várias compras).
     // De-duplica por phone, prefere row com buyer_name.

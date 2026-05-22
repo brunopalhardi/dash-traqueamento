@@ -18,6 +18,7 @@ import {
   UserPlus,
   Flame,
   ShoppingCart,
+  Download,
 } from "lucide-react";
 import { fmt } from "./format";
 import type { SendflowGroupSummary } from "@/lib/queries/sendflow";
@@ -230,6 +231,30 @@ export function SendflowGroupPanel({ data }: Props) {
 
 function TopLeadsPanel({ data }: { data: SendflowGroupSummary }) {
   const buyersInTop = data.topLeads.filter((l) => l.isBuyer).length;
+
+  function exportCsv() {
+    // Gera CSV pt-BR (separador ;). Inclui TODOS os leads, não só os 20 do display.
+    const header = "Posicao;Telefone;Nome;Score;EComprador";
+    const lines = data.topLeads.map((l) => {
+      const nome = (l.buyerName ?? "").replace(/"/g, '""');
+      return `${l.rank};${l.phone};"${nome}";${l.score};${l.isBuyer ? "Sim" : "Nao"}`;
+    });
+    const csv = "﻿" + [header, ...lines].join("\n"); // BOM pra Excel BR
+    const slug = (data.leadscoringReleaseName ?? "leads")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-");
+    const today = new Date().toISOString().slice(0, 10);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `leadscoring-${slug}-${today}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="rounded-lg border border-border/60 bg-card p-5">
       <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
@@ -244,9 +269,20 @@ function TopLeadsPanel({ data }: { data: SendflowGroupSummary }) {
             </span>
           ) : null}
         </div>
-        <div className="text-[11px] text-muted-foreground">
-          <span className="text-emerald-400 font-medium">{buyersInTop}</span> de{" "}
-          {data.topLeads.length} são compradores
+        <div className="flex items-center gap-3">
+          <div className="text-[11px] text-muted-foreground">
+            <span className="text-emerald-400 font-medium">{buyersInTop}</span> de{" "}
+            {data.topLeads.length} são compradores
+          </div>
+          <button
+            type="button"
+            onClick={exportCsv}
+            title={`Exportar lista completa (${data.topLeads.length} leads)`}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-border/60 bg-card hover:bg-accent text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Download className="h-3 w-3" />
+            CSV
+          </button>
         </div>
       </div>
 
