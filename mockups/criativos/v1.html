@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup · Detalhamento por Criativo · v1 (Operator's Almanac)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..900,30..100&family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg: #0c0a09;
+    --bg-elev: #15120f;
+    --bg-card: #1a1612;
+    --border: #2a2722;
+    --border-hi: #3a352e;
+    --text: #f5f1e8;
+    --text-muted: #8b8478;
+    --text-faint: #5a5650;
+    --accent: #d4a373;       /* warm tan */
+    --winner: #34d399;
+    --winner-soft: rgba(52, 211, 153, 0.08);
+    --winner-border: rgba(52, 211, 153, 0.35);
+    --loser: #fb7185;
+    --loser-soft: rgba(251, 113, 133, 0.07);
+    --loser-border: rgba(251, 113, 133, 0.35);
+    --warn: #fbbf24;
+    --warn-soft: rgba(251, 191, 36, 0.07);
+    --warn-border: rgba(251, 191, 36, 0.30);
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Geist', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Grain texture overlay no body */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.45 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    opacity: 0.025;
+    pointer-events: none;
+    z-index: 1;
+    mix-blend-mode: overlay;
+  }
+
+  .display {
+    font-family: 'Fraunces', serif;
+    font-feature-settings: 'ss01', 'ss02', 'tnum';
+    font-variation-settings: 'opsz' 144;
+    letter-spacing: -0.02em;
+  }
+
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-feature-settings: 'tnum', 'zero';
+  }
+
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  /* Mark + decorative numbering */
+  .exhibit-num {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-variation-settings: 'opsz' 144;
+  }
+
+  /* Subtle border treatment */
+  .card {
+    background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-elev) 100%);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 200ms, transform 200ms;
+  }
+  .card:hover {
+    border-color: var(--border-hi);
+  }
+  .card.is-winner {
+    border-color: var(--winner-border);
+    background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-elev) 100%), var(--winner-soft);
+  }
+  .card.is-loser {
+    border-color: var(--loser-border);
+    background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-elev) 100%), var(--loser-soft);
+  }
+  .card.is-warn {
+    border-color: var(--warn-border);
+  }
+
+  /* Hairline divider with serif tick */
+  .hairline {
+    height: 1px;
+    background: var(--border);
+    position: relative;
+  }
+  .hairline::before {
+    content: "❡";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--bg-card);
+    color: var(--text-faint);
+    font-size: 8px;
+    padding: 0 6px;
+  }
+
+  /* Stat block treatment */
+  .stat-label {
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-weight: 500;
+  }
+  .stat-value-big {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 144, 'wght' 350;
+    font-size: 44px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .stat-value-mid {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 96, 'wght' 400;
+    font-size: 22px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  /* Performance bar */
+  .perf-bar {
+    height: 2px;
+    background: rgba(255,255,255,0.05);
+    overflow: hidden;
+    position: relative;
+  }
+  .perf-bar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, currentColor 100%);
+    opacity: 0.6;
+  }
+
+  /* Status pip */
+  .pip {
+    width: 6px; height: 6px; border-radius: 999px;
+    background: var(--winner);
+    box-shadow: 0 0 8px var(--winner);
+    display: inline-block;
+  }
+  .pip-off {
+    background: var(--text-faint);
+    box-shadow: none;
+  }
+
+  /* Decorative meta line */
+  .meta-stripe {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    color: var(--text-faint);
+    text-transform: uppercase;
+  }
+
+  /* Section header dressing */
+  .section-rule {
+    height: 1px;
+    background: linear-gradient(90deg, var(--border) 0%, transparent 100%);
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<main class="max-w-[1400px] mx-auto px-6 md:px-12 py-12 relative z-10">
+
+  <!-- Hero / Section Header -->
+  <header class="mb-10">
+    <div class="flex items-baseline justify-between gap-6 mb-3">
+      <div>
+        <div class="meta-stripe mb-3">Exhibit · 03 — Por Criativo</div>
+        <h1 class="display text-5xl md:text-6xl leading-none" style="font-variation-settings: 'opsz' 144, 'wght' 320, 'SOFT' 30;">
+          Detalhamento <em class="exhibit-num" style="font-weight: 380;">por criativo</em>
+        </h1>
+      </div>
+      <div class="text-right shrink-0 hidden md:block">
+        <div class="meta-stripe mb-2">27 mai → 27 mai · top 9 por gasto</div>
+        <div class="text-xs text-[var(--text-muted)]">9 criativos · R$ 1.745 gastos · 10 compras</div>
+      </div>
+    </div>
+    <div class="section-rule mt-6"></div>
+  </header>
+
+  <!-- Highlights bar (3 cards) -->
+  <section class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-10">
+    <div class="card rounded p-4 is-winner">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <div class="stat-label">Melhor CPA</div>
+          <div class="stat-value-mid mt-1.5">R$ 28,38</div>
+          <div class="text-[11px] text-[var(--text-muted)] mt-1 truncate">ADGA-VD-EXAUSTÃO-V1</div>
+        </div>
+        <div class="text-[var(--winner)] text-xs uppercase tracking-widest" style="font-variation-settings: 'opsz' 96; font-family: 'Fraunces';">↑ líder</div>
+      </div>
+    </div>
+    <div class="card rounded p-4 is-loser">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <div class="stat-label">Pior CPA</div>
+          <div class="stat-value-mid mt-1.5">R$ 165,90</div>
+          <div class="text-[11px] text-[var(--text-muted)] mt-1 truncate">AD01-VD-GUIA-VARIAÇÃO-A3</div>
+        </div>
+        <div class="text-[var(--loser)] text-xs uppercase tracking-widest" style="font-variation-settings: 'opsz' 96; font-family: 'Fraunces';">↓ pior</div>
+      </div>
+    </div>
+    <div class="card rounded p-4 is-warn">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <div class="stat-label">Maior gasto · 0 compras</div>
+          <div class="stat-value-mid mt-1.5">R$ 243,76</div>
+          <div class="text-[11px] text-[var(--text-muted)] mt-1 truncate">AD03-VD-GUIA-TESTE-PAUSADO</div>
+        </div>
+        <div class="text-[var(--warn)] text-xs uppercase tracking-widest" style="font-variation-settings: 'opsz' 96; font-family: 'Fraunces';">⚠ atenção</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Grid de cards de criativos -->
+  <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+    <!-- WINNER CARD -->
+    <article class="card rounded is-winner">
+      <div class="relative aspect-video overflow-hidden bg-black/30">
+        <img src="https://picsum.photos/seed/winner1/600/340" class="w-full h-full object-cover opacity-95" alt="" />
+        <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] via-transparent to-transparent"></div>
+        <!-- Status pip -->
+        <div class="absolute top-2 left-3 flex items-center gap-1.5 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm">
+          <span class="pip"></span>
+          <span class="text-[10px] tracking-wider text-[var(--text)] uppercase font-medium">Ativo</span>
+        </div>
+        <!-- Rank ribbon -->
+        <div class="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] uppercase tracking-widest font-semibold" style="background: var(--winner); color: #042f2e;">
+          № 01 · Melhor CPA
+        </div>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="exhibit-num text-[var(--text-faint)] text-xs italic">№ 01</div>
+            <h3 class="display text-lg leading-tight mt-0.5 truncate" title="ADGA-VD-EXAUSTÃO-V1" style="font-variation-settings: 'opsz' 96, 'wght' 420;">
+              ADGA-VD-Exaustão V1
+            </h3>
+            <a href="#" class="meta-stripe hover:text-[var(--text)] transition-colors inline-flex items-center gap-1 mt-1">
+              guia-alzheimer-v1.lovable.app ↗
+            </a>
+          </div>
+        </div>
+
+        <!-- Hero metric: CPA -->
+        <div class="flex items-end justify-between gap-2 pt-2">
+          <div>
+            <div class="stat-label">CPA</div>
+            <div class="stat-value-big text-[var(--winner)]">R$ 28<span class="text-2xl">,38</span></div>
+          </div>
+          <div class="text-right space-y-0.5">
+            <div class="stat-label">Compras</div>
+            <div class="stat-value-mid">2</div>
+          </div>
+        </div>
+
+        <div class="hairline"></div>
+
+        <!-- 4 supporting metrics -->
+        <div class="grid grid-cols-4 gap-3">
+          <div>
+            <div class="stat-label">CTR</div>
+            <div class="mono text-sm tabular mt-1">5.62%</div>
+          </div>
+          <div>
+            <div class="stat-label">Cliques</div>
+            <div class="mono text-sm tabular mt-1">64</div>
+          </div>
+          <div>
+            <div class="stat-label">CPC</div>
+            <div class="mono text-sm tabular mt-1">R$ 0,89</div>
+          </div>
+          <div>
+            <div class="stat-label">TxConv</div>
+            <div class="mono text-sm tabular mt-1">3.13%</div>
+          </div>
+        </div>
+
+        <!-- Footer / spend & perf bar -->
+        <div class="flex items-center justify-between pt-2 text-[var(--text-muted)] text-xs">
+          <span class="mono tabular">1.139 impressões</span>
+          <span class="mono tabular text-[var(--text)] font-medium">R$ 56,76 gastos</span>
+        </div>
+        <div class="perf-bar text-[var(--winner)]" style="--w: 32%;">
+          <div style="width: 32%; height: 100%; background: currentColor; opacity: 0.5;"></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- NEUTRAL CARD #1 -->
+    <article class="card rounded">
+      <div class="relative aspect-video overflow-hidden bg-black/30">
+        <img src="https://picsum.photos/seed/n1/600/340" class="w-full h-full object-cover opacity-80" alt="" />
+        <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] via-transparent to-transparent"></div>
+        <div class="absolute top-2 left-3 flex items-center gap-1.5 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm">
+          <span class="pip"></span>
+          <span class="text-[10px] tracking-wider text-[var(--text)] uppercase font-medium">Ativo</span>
+        </div>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="exhibit-num text-[var(--text-faint)] text-xs italic">№ 02</div>
+            <h3 class="display text-lg leading-tight mt-0.5 truncate" style="font-variation-settings: 'opsz' 96, 'wght' 420;">
+              AD01-VD-Guia
+            </h3>
+            <a href="#" class="meta-stripe hover:text-[var(--text)] transition-colors inline-flex items-center gap-1 mt-1">
+              guia-alzheimer-v2.lovable.app ↗
+            </a>
+          </div>
+        </div>
+
+        <div class="flex items-end justify-between gap-2 pt-2">
+          <div>
+            <div class="stat-label">CPA</div>
+            <div class="stat-value-big">R$ 34<span class="text-2xl">,11</span></div>
+          </div>
+          <div class="text-right space-y-0.5">
+            <div class="stat-label">Compras</div>
+            <div class="stat-value-mid">2</div>
+          </div>
+        </div>
+
+        <div class="hairline"></div>
+
+        <div class="grid grid-cols-4 gap-3">
+          <div><div class="stat-label">CTR</div><div class="mono text-sm tabular mt-1">5.29%</div></div>
+          <div><div class="stat-label">Cliques</div><div class="mono text-sm tabular mt-1">53</div></div>
+          <div><div class="stat-label">CPC</div><div class="mono text-sm tabular mt-1">R$ 1,29</div></div>
+          <div><div class="stat-label">TxConv</div><div class="mono text-sm tabular mt-1">3.77%</div></div>
+        </div>
+
+        <div class="flex items-center justify-between pt-2 text-[var(--text-muted)] text-xs">
+          <span class="mono tabular">1.002 impressões</span>
+          <span class="mono tabular text-[var(--text)] font-medium">R$ 68,22 gastos</span>
+        </div>
+        <div class="perf-bar text-[var(--text-muted)]">
+          <div style="width: 39%; height: 100%; background: currentColor; opacity: 0.4;"></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- NEUTRAL CARD #2 -->
+    <article class="card rounded">
+      <div class="relative aspect-video overflow-hidden bg-black/30">
+        <img src="https://picsum.photos/seed/n2/600/340" class="w-full h-full object-cover opacity-80" alt="" />
+        <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] via-transparent to-transparent"></div>
+        <div class="absolute top-2 left-3 flex items-center gap-1.5 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm">
+          <span class="pip"></span>
+          <span class="text-[10px] tracking-wider text-[var(--text)] uppercase font-medium">Ativo</span>
+        </div>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="exhibit-num text-[var(--text-faint)] text-xs italic">№ 03</div>
+            <h3 class="display text-lg leading-tight mt-0.5 truncate" style="font-variation-settings: 'opsz' 96, 'wght' 420;">
+              ADGA-VD-Exaustão V2
+            </h3>
+            <a href="#" class="meta-stripe hover:text-[var(--text)] transition-colors inline-flex items-center gap-1 mt-1">
+              guia-alzheimer-v1.lovable.app ↗
+            </a>
+          </div>
+        </div>
+
+        <div class="flex items-end justify-between gap-2 pt-2">
+          <div>
+            <div class="stat-label">CPA</div>
+            <div class="stat-value-big">R$ 55<span class="text-2xl">,04</span></div>
+          </div>
+          <div class="text-right space-y-0.5">
+            <div class="stat-label">Compras</div>
+            <div class="stat-value-mid">1</div>
+          </div>
+        </div>
+
+        <div class="hairline"></div>
+
+        <div class="grid grid-cols-4 gap-3">
+          <div><div class="stat-label">CTR</div><div class="mono text-sm tabular mt-1">6.01%</div></div>
+          <div><div class="stat-label">Cliques</div><div class="mono text-sm tabular mt-1">81</div></div>
+          <div><div class="stat-label">CPC</div><div class="mono text-sm tabular mt-1">R$ 0,68</div></div>
+          <div><div class="stat-label">TxConv</div><div class="mono text-sm tabular mt-1">1.23%</div></div>
+        </div>
+
+        <div class="flex items-center justify-between pt-2 text-[var(--text-muted)] text-xs">
+          <span class="mono tabular">1.347 impressões</span>
+          <span class="mono tabular text-[var(--text)] font-medium">R$ 55,04 gastos</span>
+        </div>
+        <div class="perf-bar text-[var(--text-muted)]">
+          <div style="width: 32%; height: 100%; background: currentColor; opacity: 0.4;"></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- NEUTRAL CARD #3 (single purchase) -->
+    <article class="card rounded">
+      <div class="relative aspect-video overflow-hidden bg-black/30">
+        <img src="https://picsum.photos/seed/n3/600/340" class="w-full h-full object-cover opacity-80" alt="" />
+        <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] via-transparent to-transparent"></div>
+        <div class="absolute top-2 left-3 flex items-center gap-1.5 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm">
+          <span class="pip pip-off"></span>
+          <span class="text-[10px] tracking-wider text-[var(--text-muted)] uppercase font-medium">Pausado</span>
+        </div>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="exhibit-num text-[var(--text-faint)] text-xs italic">№ 04</div>
+            <h3 class="display text-lg leading-tight mt-0.5 truncate" style="font-variation-settings: 'opsz' 96, 'wght' 420;">
+              ADGA-VD-Exaustão V3
+            </h3>
+            <a href="#" class="meta-stripe hover:text-[var(--text)] transition-colors inline-flex items-center gap-1 mt-1">
+              guia-alzheimer-v1.lovable.app ↗
+            </a>
+          </div>
+        </div>
+
+        <div class="flex items-end justify-between gap-2 pt-2">
+          <div>
+            <div class="stat-label">CPA</div>
+            <div class="stat-value-big">R$ 54<span class="text-2xl">,79</span></div>
+          </div>
+          <div class="text-right space-y-0.5">
+            <div class="stat-label">Compras</div>
+            <div class="stat-value-mid">1</div>
+          </div>
+        </div>
+
+        <div class="hairline"></div>
+
+        <div class="grid grid-cols-4 gap-3">
+          <div><div class="stat-label">CTR</div><div class="mono text-sm tabular mt-1">5.31%</div></div>
+          <div><div class="stat-label">Cliques</div><div class="mono text-sm tabular mt-1">54</div></div>
+          <div><div class="stat-label">CPC</div><div class="mono text-sm tabular mt-1">R$ 1,01</div></div>
+          <div><div class="stat-label">TxConv</div><div class="mono text-sm tabular mt-1">1.85%</div></div>
+        </div>
+
+        <div class="flex items-center justify-between pt-2 text-[var(--text-muted)] text-xs">
+          <span class="mono tabular">1.016 impressões</span>
+          <span class="mono tabular text-[var(--text)] font-medium">R$ 54,79 gastos</span>
+        </div>
+        <div class="perf-bar text-[var(--text-muted)]">
+          <div style="width: 31%; height: 100%; background: currentColor; opacity: 0.4;"></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- NEUTRAL CARD - no purchase -->
+    <article class="card rounded is-warn">
+      <div class="relative aspect-video overflow-hidden bg-black/30">
+        <img src="https://picsum.photos/seed/w1/600/340" class="w-full h-full object-cover opacity-80" alt="" />
+        <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] via-transparent to-transparent"></div>
+        <div class="absolute top-2 left-3 flex items-center gap-1.5 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm">
+          <span class="pip"></span>
+          <span class="text-[10px] tracking-wider text-[var(--text)] uppercase font-medium">Ativo</span>
+        </div>
+        <div class="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] uppercase tracking-widest font-semibold" style="background: var(--warn); color: #1c1917;">
+          ⚠ 0 compras
+        </div>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="exhibit-num text-[var(--text-faint)] text-xs italic">№ 05</div>
+            <h3 class="display text-lg leading-tight mt-0.5 truncate" style="font-variation-settings: 'opsz' 96, 'wght' 420;">
+              AD03-VD-Guia · teste
+            </h3>
+            <a href="#" class="meta-stripe hover:text-[var(--text)] transition-colors inline-flex items-center gap-1 mt-1">
+              guia-alzheimer-v4.lovable.app ↗
+            </a>
+          </div>
+        </div>
+
+        <div class="flex items-end justify-between gap-2 pt-2">
+          <div>
+            <div class="stat-label">CPA</div>
+            <div class="stat-value-big text-[var(--text-faint)]">—</div>
+          </div>
+          <div class="text-right space-y-0.5">
+            <div class="stat-label">Compras</div>
+            <div class="stat-value-mid text-[var(--text-faint)]">0</div>
+          </div>
+        </div>
+
+        <div class="hairline"></div>
+
+        <div class="grid grid-cols-4 gap-3">
+          <div><div class="stat-label">CTR</div><div class="mono text-sm tabular mt-1">6.25%</div></div>
+          <div><div class="stat-label">Cliques</div><div class="mono text-sm tabular mt-1">130</div></div>
+          <div><div class="stat-label">CPC</div><div class="mono text-sm tabular mt-1">R$ 1,13</div></div>
+          <div><div class="stat-label">TxConv</div><div class="mono text-sm tabular mt-1">0.00%</div></div>
+        </div>
+
+        <div class="flex items-center justify-between pt-2 text-[var(--text-muted)] text-xs">
+          <span class="mono tabular">2.080 impressões</span>
+          <span class="mono tabular text-[var(--text)] font-medium">R$ 146,86 gastos</span>
+        </div>
+        <div class="perf-bar text-[var(--warn)]">
+          <div style="width: 84%; height: 100%; background: currentColor; opacity: 0.5;"></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- LOSER CARD -->
+    <article class="card rounded is-loser">
+      <div class="relative aspect-video overflow-hidden bg-black/30">
+        <img src="https://picsum.photos/seed/loser1/600/340" class="w-full h-full object-cover opacity-80" alt="" />
+        <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] via-transparent to-transparent"></div>
+        <div class="absolute top-2 left-3 flex items-center gap-1.5 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm">
+          <span class="pip"></span>
+          <span class="text-[10px] tracking-wider text-[var(--text)] uppercase font-medium">Ativo</span>
+        </div>
+        <div class="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] uppercase tracking-widest font-semibold" style="background: var(--loser); color: #4c0519;">
+          ↓ Pior CPA
+        </div>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="exhibit-num text-[var(--text-faint)] text-xs italic">№ 06</div>
+            <h3 class="display text-lg leading-tight mt-0.5 truncate" style="font-variation-settings: 'opsz' 96, 'wght' 420;">
+              AD01-VD-Guia variação A3
+            </h3>
+            <a href="#" class="meta-stripe hover:text-[var(--text)] transition-colors inline-flex items-center gap-1 mt-1">
+              guia-alzheimer-v1-a1.lovable.app ↗
+            </a>
+          </div>
+        </div>
+
+        <div class="flex items-end justify-between gap-2 pt-2">
+          <div>
+            <div class="stat-label">CPA</div>
+            <div class="stat-value-big text-[var(--loser)]">R$ 165<span class="text-2xl">,90</span></div>
+          </div>
+          <div class="text-right space-y-0.5">
+            <div class="stat-label">Compras</div>
+            <div class="stat-value-mid">1</div>
+          </div>
+        </div>
+
+        <div class="hairline"></div>
+
+        <div class="grid grid-cols-4 gap-3">
+          <div><div class="stat-label">CTR</div><div class="mono text-sm tabular mt-1">3.53%</div></div>
+          <div><div class="stat-label">Cliques</div><div class="mono text-sm tabular mt-1">140</div></div>
+          <div><div class="stat-label">CPC</div><div class="mono text-sm tabular mt-1">R$ 1,18</div></div>
+          <div><div class="stat-label">TxConv</div><div class="mono text-sm tabular mt-1">0.71%</div></div>
+        </div>
+
+        <div class="flex items-center justify-between pt-2 text-[var(--text-muted)] text-xs">
+          <span class="mono tabular">3.965 impressões</span>
+          <span class="mono tabular text-[var(--text)] font-medium">R$ 165,90 gastos</span>
+        </div>
+        <div class="perf-bar text-[var(--loser)]">
+          <div style="width: 95%; height: 100%; background: currentColor; opacity: 0.5;"></div>
+        </div>
+      </div>
+    </article>
+
+  </section>
+
+  <!-- Footnote -->
+  <footer class="mt-12 pt-6 border-t border-[var(--border)]">
+    <p class="meta-stripe text-[var(--text-faint)]">
+      Mockup v1 · Operator's Almanac · Fraunces / Geist / JetBrains Mono · Tons warm dark + grain · {{ data live: 27 mai 2026 }}
+    </p>
+  </footer>
+
+</main>
+
+</body>
+</html>

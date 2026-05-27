@@ -9,59 +9,75 @@ interface Highlight {
 }
 
 /**
- * Mostra 3 cartões de destaque acima de cada tabela:
- *  - melhor (verde, ↑)
- *  - pior (vermelho, ↓)
- *  - atenção (amarelo, ⚠) — opcional
- *
+ * 3 cards de destaque acima de cada tabela: melhor, pior, atenção.
  * Pensado pra leigo bater o olho e entender o que importa sem ler tabela.
  */
 export function FunnelHighlights({ items }: { items: Highlight[] }) {
   if (items.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
       {items.map((h, i) => {
         const Icon =
           h.tone === "good" ? TrendingUp : h.tone === "bad" ? TrendingDown : AlertTriangle;
         const tone =
           h.tone === "good"
             ? {
-                ring: "ring-emerald-500/30 bg-emerald-500/[0.04]",
-                icon: "text-emerald-400 bg-emerald-500/10",
-                label: "text-emerald-400/80",
+                border: "border-emerald-400/35",
+                overlay: "bg-emerald-400/[0.05]",
+                tagBg: "bg-emerald-400/15",
+                tagText: "text-emerald-400",
+                valueText: "text-emerald-400",
+                tagLabel: "↑ líder",
               }
             : h.tone === "bad"
               ? {
-                  ring: "ring-rose-500/30 bg-rose-500/[0.04]",
-                  icon: "text-rose-400 bg-rose-500/10",
-                  label: "text-rose-400/80",
+                  border: "border-rose-400/35",
+                  overlay: "bg-rose-400/[0.05]",
+                  tagBg: "bg-rose-400/15",
+                  tagText: "text-rose-400",
+                  valueText: "text-rose-400",
+                  tagLabel: "↓ pior",
                 }
               : {
-                  ring: "ring-amber-500/30 bg-amber-500/[0.04]",
-                  icon: "text-amber-400 bg-amber-500/10",
-                  label: "text-amber-400/80",
+                  border: "border-amber-400/35",
+                  overlay: "bg-amber-400/[0.04]",
+                  tagBg: "bg-amber-400/15",
+                  tagText: "text-amber-400",
+                  valueText: "text-amber-400",
+                  tagLabel: "⚠ atenção",
                 };
+
         return (
           <div
             key={i}
-            className={`relative rounded-lg ring-1 ${tone.ring} p-3 flex items-start gap-3`}
+            className={`relative rounded-md border ${tone.border} bg-card overflow-hidden p-4`}
           >
-            <div className={`p-2 rounded-md ${tone.icon}`}>
-              <Icon className="h-4 w-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className={`text-[10px] font-medium uppercase tracking-wider ${tone.label}`}>
-                {h.label}
-              </div>
-              <div className="text-lg font-semibold text-foreground tabular-nums leading-tight mt-0.5">
-                {h.value}
-              </div>
-              {h.subtitle && (
-                <div className="text-xs text-muted-foreground truncate mt-0.5" title={h.subtitle}>
-                  {h.subtitle}
+            <div className={`pointer-events-none absolute inset-0 ${tone.overlay}`} />
+            <div className="relative flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
+                  {h.label}
                 </div>
-              )}
+                <div
+                  className={`font-mono font-medium tabular-nums text-2xl leading-none tracking-tight mt-2 ${tone.valueText}`}
+                >
+                  {h.value}
+                </div>
+                {h.subtitle && (
+                  <div
+                    className="text-xs text-muted-foreground mt-1.5 truncate"
+                    title={h.subtitle}
+                  >
+                    {h.subtitle}
+                  </div>
+                )}
+              </div>
+              <div
+                className={`font-mono text-[10px] tracking-wider px-1.5 py-1 rounded uppercase font-medium ${tone.tagBg} ${tone.tagText} inline-flex items-center gap-1 shrink-0`}
+              >
+                <Icon className="h-2.5 w-2.5" />
+              </div>
             </div>
           </div>
         );
@@ -73,7 +89,7 @@ export function FunnelHighlights({ items }: { items: Highlight[] }) {
 /* ─── Helpers para computar highlights ─── */
 
 interface Item {
-  label: string; // identificador (ex: nome da campanha)
+  label: string;
   spend: number;
   purchase: number;
   initiateCheckout?: number;
@@ -83,7 +99,6 @@ interface Item {
 
 /**
  * Best/worst de CPA entre items com gasto significativo (>R$50 e ≥1 compra).
- * Ignora ruído de items pequenos.
  */
 export function highlightsByCpa(items: Item[]): Highlight[] {
   const significant = items.filter((i) => i.spend >= 50 && i.purchase >= 1);
@@ -109,13 +124,12 @@ export function highlightsByCpa(items: Item[]): Highlight[] {
     });
   }
 
-  // Atenção: maior gasto sem compra
   const zeroPurchase = items
     .filter((i) => i.purchase === 0 && i.spend >= 50)
     .sort((a, b) => b.spend - a.spend)[0];
   if (zeroPurchase) {
     out.push({
-      label: "Maior gasto s/ compra",
+      label: "Maior gasto · 0 compras",
       value: fmt.money(zeroPurchase.spend),
       subtitle: zeroPurchase.label,
       tone: "neutral",
