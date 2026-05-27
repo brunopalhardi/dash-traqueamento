@@ -1,4 +1,4 @@
-import { Activity, BookOpen, DollarSign, ShoppingCart, Target, TrendingUp } from "lucide-react";
+// Ícones mantidos por enquanto pra retrocompat de outras chamadas. Layout novo não usa.
 import {
   getDailySeries,
   getKpis,
@@ -142,45 +142,35 @@ export default async function GuiaPage({
           value={fmt.money(kpis.spend)}
           delta={compare && prevKpis ? deltaOf(kpis.spend, prevKpis.spend) : null}
           invertDelta
-          icon={DollarSign}
-          accent="violet"
         />
         <KpiCard
           label="Compradores"
           value={fmt.int(purchaseCount)}
           delta={compare ? deltaOf(purchaseCount, prevPurchaseCount) : null}
-          icon={ShoppingCart}
-          accent="emerald"
         />
         <KpiCard
           label="Receita"
           value={fmt.money(revenueHot)}
           delta={compare ? deltaOf(revenueHot, prevRevenueHot) : null}
-          icon={TrendingUp}
-          accent="emerald"
         />
         <KpiCard
           label="CAC"
           value={purchaseCount > 0 ? fmt.money(cac) : "—"}
           delta={compare && prevCac > 0 ? deltaOf(cac, prevCac) : null}
           invertDelta
-          icon={Target}
-          accent="amber"
+          tone={purchaseCount > 0 && cac > 200 ? "warn" : undefined}
         />
         <KpiCard
           label="ROAS"
           value={fmt.ratio(roas)}
           hint="alvo 2x"
           delta={compare && prevRoas > 0 ? deltaOf(roas, prevRoas) : null}
-          icon={Activity}
-          accent="sky"
+          tone={roas >= 2 ? "good" : roas >= 1 ? "warn" : roas > 0 ? "bad" : "neutral"}
         />
         <KpiCard
           label="Ticket médio"
           value={purchaseCount > 0 ? fmt.money(ticketMedio) : "—"}
           delta={compare && prevTicket > 0 ? deltaOf(ticketMedio, prevTicket) : null}
-          icon={BookOpen}
-          accent="fuchsia"
         />
       </section>
 

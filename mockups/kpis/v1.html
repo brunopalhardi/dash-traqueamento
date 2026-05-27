@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup · KPI Cards · v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg: #09090b;
+    --bg-card: #141418;
+    --bg-card-hi: #1a1a1f;
+    --border: #232328;
+    --border-hi: #34343b;
+    --text: #fafafa;
+    --text-muted: #a1a1aa;
+    --text-faint: #52525b;
+    --winner: #34d399;
+    --loser: #f87171;
+    --warn: #fbbf24;
+  }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Geist', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.005em;
+  }
+  .mono { font-family: 'Geist Mono', monospace; font-feature-settings: 'tnum', 'zero'; }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  .kpi-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 180ms, background 180ms;
+  }
+  .kpi-card:hover { border-color: var(--border-hi); }
+
+  .kpi-card.is-good { border-color: rgba(52, 211, 153, 0.3); }
+  .kpi-card.is-bad { border-color: rgba(248, 113, 113, 0.3); }
+
+  .kpi-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-weight: 500;
+  }
+
+  .kpi-value {
+    font-family: 'Geist Mono', monospace;
+    font-feature-settings: 'tnum';
+    font-weight: 500;
+    font-size: 30px;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    margin-top: 10px;
+  }
+
+  .kpi-delta {
+    font-family: 'Geist Mono', monospace;
+    font-feature-settings: 'tnum';
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    padding: 2px 5px;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .kpi-hint {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+  }
+
+  /* Accent indicator vertical bar (left rail) */
+  .accent-rail {
+    position: absolute;
+    top: 0; bottom: 0; left: 0;
+    width: 2px;
+  }
+
+  /* Icon chip */
+  .icon-chip {
+    width: 22px; height: 22px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+
+  .meta {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: var(--text-faint);
+    text-transform: lowercase;
+  }
+  .rule {
+    height: 1px;
+    background: linear-gradient(90deg, var(--border) 0%, transparent 100%);
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<main class="max-w-[1400px] mx-auto px-6 md:px-12 py-10">
+
+  <header class="mb-8">
+    <div class="flex items-end justify-between gap-6 mb-4">
+      <div>
+        <div class="meta mb-2">guia · perpétuo · 27 mai → 27 mai</div>
+        <h1 class="text-3xl md:text-4xl font-medium leading-tight tracking-tight">
+          Visão geral
+        </h1>
+      </div>
+    </div>
+    <div class="rule"></div>
+  </header>
+
+  <p class="text-sm text-[var(--text-muted)] mb-4">v1 — 6 cards, layout limpo, sem ícones grandes coloridos. Comparação opcional via tag.</p>
+
+  <!-- v1: clean, no left rail -->
+  <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-12">
+    <div class="kpi-card">
+      <div class="flex items-center justify-between">
+        <div class="kpi-label">Investido</div>
+        <div class="icon-chip" style="background: rgba(139, 92, 246, 0.12); color: #c4b5fd;">$</div>
+      </div>
+      <div class="kpi-value">R$ 1.745</div>
+      <div class="mt-3">
+        <span class="kpi-delta" style="background: rgba(248, 113, 113, 0.12); color: var(--loser);">↑ 24,5%</span>
+      </div>
+    </div>
+
+    <div class="kpi-card is-good">
+      <div class="flex items-center justify-between">
+        <div class="kpi-label">Compradores</div>
+        <div class="icon-chip" style="background: rgba(52, 211, 153, 0.12); color: var(--winner);">↗</div>
+      </div>
+      <div class="kpi-value">10</div>
+      <div class="mt-3">
+        <span class="kpi-delta" style="background: rgba(52, 211, 153, 0.12); color: var(--winner);">↑ 25,0%</span>
+      </div>
+    </div>
+
+    <div class="kpi-card is-good">
+      <div class="flex items-center justify-between">
+        <div class="kpi-label">Receita</div>
+        <div class="icon-chip" style="background: rgba(52, 211, 153, 0.12); color: var(--winner);">★</div>
+      </div>
+      <div class="kpi-value">R$ 2.970</div>
+      <div class="mt-3">
+        <span class="kpi-delta" style="background: rgba(52, 211, 153, 0.12); color: var(--winner);">↑ 32,0%</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="flex items-center justify-between">
+        <div class="kpi-label">CAC</div>
+        <div class="icon-chip" style="background: rgba(251, 191, 36, 0.12); color: var(--warn);">⊕</div>
+      </div>
+      <div class="kpi-value">R$ 174</div>
+      <div class="mt-3">
+        <span class="kpi-delta" style="background: rgba(52, 211, 153, 0.12); color: var(--winner);">↓ 0,4%</span>
+      </div>
+    </div>
+
+    <div class="kpi-card is-good">
+      <div class="flex items-center justify-between">
+        <div class="kpi-label">ROAS</div>
+        <div class="icon-chip" style="background: rgba(56, 189, 248, 0.12); color: #7dd3fc;">↻</div>
+      </div>
+      <div class="kpi-value">1,70x</div>
+      <div class="mt-3 flex items-center gap-2">
+        <span class="kpi-delta" style="background: rgba(52, 211, 153, 0.12); color: var(--winner);">↑ 5,8%</span>
+        <span class="kpi-hint">alvo 2x</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="flex items-center justify-between">
+        <div class="kpi-label">Ticket Médio</div>
+        <div class="icon-chip" style="background: rgba(232, 121, 249, 0.12); color: #e879f9;">≡</div>
+      </div>
+      <div class="kpi-value">R$ 297</div>
+      <div class="mt-3">
+        <span class="kpi-delta" style="background: rgba(82, 82, 91, 0.25); color: var(--text-muted);">—</span>
+      </div>
+    </div>
+  </section>
+
+  <p class="text-sm text-[var(--text-muted)] mb-4">v2 — com accent rail vertical à esquerda (verde/vermelho indica saúde direta da métrica)</p>
+
+  <!-- v2: with left accent rail by health -->
+  <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-12">
+    <div class="kpi-card" style="padding-left: 22px;">
+      <div class="accent-rail" style="background: var(--text-faint);"></div>
+      <div class="flex items-center justify-between">
+        <div class="kpi-label">Investido</div>
+        <span class="kpi-delta" style="background: rgba(248, 113, 113, 0.12); color: var(--loser);">↑ 24%</span>
+      </div>
+      <div class="kpi-value">R$ 1.745</div>
+    </div>
+
+    <div class="kpi-card" style="padding-left: 22px;">
+      <div class="accent-rail" style="background: var(--winner);"></div>
+      <div class="flex items-center justify-between">
+        <div class="kpi-label">Compradores</div>
+        <span class="kpi-delta" style="background: rgba(52, 211, 153, 0.12); color: var(--winner);">↑ 25%</span>
+      </div>
+      <div class="kpi-value">10</div>
+    </div>
+
+    <div class="kpi-card" style="padding-left: 22px;">
+      <div class="accent-rail" style="background: var(--winner);"></div>
+      <div class="flex items-center justify-between">
+        <div class="kpi-label">Receita</div>
+        <span class="kpi-delta" style="background: rgba(52, 211, 153, 0.12); color: var(--winner);">↑ 32%</span>
+      </div>
+      <div class="kpi-value">R$ 2.970</div>
+    </div>
+
+    <div class="kpi-card" style="padding-left: 22px;">
+      <div class="accent-rail" style="background: var(--warn);"></div>
+      <div class="flex items-center justify-between">
+        <div class="kpi-label">CAC</div>
+        <span class="kpi-delta" style="background: rgba(52, 211, 153, 0.12); color: var(--winner);">↓ 0,4%</span>
+      </div>
+      <div class="kpi-value">R$ 174</div>
+    </div>
+
+    <div class="kpi-card" style="padding-left: 22px;">
+      <div class="accent-rail" style="background: var(--warn);"></div>
+      <div class="flex items-center justify-between">
+        <div class="kpi-label">ROAS</div>
+        <span class="kpi-delta" style="background: rgba(52, 211, 153, 0.12); color: var(--winner);">↑ 5,8%</span>
+      </div>
+      <div class="kpi-value">1,70<span style="font-size: 18px; color: var(--text-muted);">x</span></div>
+      <div class="kpi-hint mt-1.5">alvo 2x</div>
+    </div>
+
+    <div class="kpi-card" style="padding-left: 22px;">
+      <div class="accent-rail" style="background: var(--text-faint);"></div>
+      <div class="flex items-center justify-between">
+        <div class="kpi-label">Ticket Médio</div>
+      </div>
+      <div class="kpi-value">R$ 297</div>
+    </div>
+  </section>
+
+  <p class="text-sm text-[var(--text-muted)] mb-4">v3 — minimalista absoluto: só label + valor, delta no canto. Sem ícone, sem rail.</p>
+
+  <!-- v3: ultra minimal -->
+  <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-12">
+    <div class="kpi-card">
+      <div class="kpi-label">Investido</div>
+      <div class="kpi-value">R$ 1.745</div>
+      <div class="mt-2 flex items-baseline gap-2">
+        <span class="mono text-xs tabular font-medium text-[var(--loser)]">↑ 24,5%</span>
+        <span class="kpi-hint">vs anterior</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Compradores</div>
+      <div class="kpi-value">10</div>
+      <div class="mt-2 flex items-baseline gap-2">
+        <span class="mono text-xs tabular font-medium text-[var(--winner)]">↑ 25,0%</span>
+        <span class="kpi-hint">vs anterior</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Receita</div>
+      <div class="kpi-value">R$ 2.970</div>
+      <div class="mt-2 flex items-baseline gap-2">
+        <span class="mono text-xs tabular font-medium text-[var(--winner)]">↑ 32,0%</span>
+        <span class="kpi-hint">vs anterior</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">CAC</div>
+      <div class="kpi-value">R$ 174</div>
+      <div class="mt-2 flex items-baseline gap-2">
+        <span class="mono text-xs tabular font-medium text-[var(--winner)]">↓ 0,4%</span>
+        <span class="kpi-hint">vs anterior</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">ROAS</div>
+      <div class="kpi-value">1,70<span style="font-size: 18px; color: var(--text-muted);">x</span></div>
+      <div class="mt-2 flex items-baseline gap-2">
+        <span class="mono text-xs tabular font-medium text-[var(--winner)]">↑ 5,8%</span>
+        <span class="kpi-hint">alvo 2x</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Ticket Médio</div>
+      <div class="kpi-value">R$ 297</div>
+      <div class="mt-2">
+        <span class="kpi-hint">média do período</span>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mt-10 pt-5 border-t border-[var(--border)]">
+    <p class="meta">3 variações lado a lado · v1 com ícones · v2 com accent rail · v3 minimal</p>
+  </footer>
+
+</main>
+
+</body>
+</html>

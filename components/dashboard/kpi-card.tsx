@@ -1,8 +1,7 @@
-import { ArrowDownRight, ArrowUpRight, type LucideIcon } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import type { LucideIcon } from "lucide-react";
 
 export type KpiAccent = "violet" | "emerald" | "amber" | "rose" | "sky" | "fuchsia";
+export type KpiTone = "good" | "warn" | "bad" | "neutral";
 
 interface KpiCardProps {
   label: string;
@@ -11,69 +10,73 @@ interface KpiCardProps {
   hint?: string;
   /** Inverte semântica do delta (ex.: CPL menor é melhor) */
   invertDelta?: boolean;
+  /** Override do rail. Sem passar, infere do delta. */
+  tone?: KpiTone;
+  /** Mantido por compatibilidade — não usado visualmente no design atual. */
   icon?: LucideIcon;
+  /** Mantido por compatibilidade — não usado visualmente no design atual. */
   accent?: KpiAccent;
 }
 
-const ACCENT_CLASSES: Record<KpiAccent, { bg: string; border: string; text: string }> = {
-  violet:  { bg: "bg-violet-500/10",  border: "border-violet-500/30",  text: "text-violet-400" },
-  emerald: { bg: "bg-emerald-500/10", border: "border-emerald-500/30", text: "text-emerald-400" },
-  amber:   { bg: "bg-amber-500/10",   border: "border-amber-500/30",   text: "text-amber-400" },
-  rose:    { bg: "bg-rose-500/10",    border: "border-rose-500/30",    text: "text-rose-400" },
-  sky:     { bg: "bg-sky-500/10",     border: "border-sky-500/30",     text: "text-sky-400" },
-  fuchsia: { bg: "bg-fuchsia-500/10", border: "border-fuchsia-500/30", text: "text-fuchsia-400" },
+const RAIL: Record<KpiTone, string> = {
+  good: "bg-emerald-400",
+  warn: "bg-amber-400",
+  bad: "bg-rose-400",
+  neutral: "bg-muted-foreground/30",
 };
 
-export function KpiCard({ label, value, delta, hint, invertDelta, icon: Icon, accent }: KpiCardProps) {
-  const goodPositive = invertDelta ? !delta?.positive : delta?.positive;
-  const accentCls = accent
-    ? ACCENT_CLASSES[accent]
-    : { bg: "bg-primary/10", border: "border-primary/20", text: "text-primary" };
+const DELTA_STYLES: Record<"good" | "bad", { bg: string; text: string }> = {
+  good: { bg: "bg-emerald-400/12", text: "text-emerald-400" },
+  bad: { bg: "bg-rose-400/12", text: "text-rose-400" },
+};
+
+function inferTone(
+  delta: { positive: boolean } | null | undefined,
+  invertDelta: boolean | undefined,
+): KpiTone {
+  if (!delta) return "neutral";
+  const goodPositive = invertDelta ? !delta.positive : delta.positive;
+  return goodPositive ? "good" : "bad";
+}
+
+export function KpiCard({
+  label,
+  value,
+  delta,
+  hint,
+  invertDelta,
+  tone,
+}: KpiCardProps) {
+  const resolvedTone = tone ?? inferTone(delta, invertDelta);
+  const goodPositive = delta ? (invertDelta ? !delta.positive : delta.positive) : false;
+  const deltaStyle = delta ? DELTA_STYLES[goodPositive ? "good" : "bad"] : null;
 
   return (
-    <Card className="bg-card border-border/60">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-            {label}
-          </div>
-          {Icon ? (
-            <div
-              className={cn(
-                "h-7 w-7 rounded-md border flex items-center justify-center shrink-0",
-                accentCls.bg,
-                accentCls.border,
-                accentCls.text,
-              )}
-            >
-              <Icon className="h-3.5 w-3.5" />
-            </div>
-          ) : null}
+    <div className="relative rounded-md border border-border bg-card pl-[22px] pr-5 py-[18px] overflow-hidden transition-colors hover:border-border-hi">
+      <div className={`absolute inset-y-0 left-0 w-0.5 ${RAIL[resolvedTone]}`} />
+
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground/70 font-medium">
+          {label}
         </div>
-        <div className="mt-3 text-3xl font-bold tabular-nums text-foreground tracking-tight">
-          {value}
-        </div>
-        {delta || hint ? (
-          <div className="mt-2 flex items-center gap-2 text-xs">
-            {delta ? (
-              <span
-                className={cn(
-                  "inline-flex items-center gap-0.5 font-medium",
-                  goodPositive ? "text-emerald-400" : "text-rose-400",
-                )}
-              >
-                {delta.positive ? (
-                  <ArrowUpRight className="h-3 w-3" />
-                ) : (
-                  <ArrowDownRight className="h-3 w-3" />
-                )}
-                {delta.label}
-              </span>
-            ) : null}
-            {hint ? <span className="text-muted-foreground">{hint}</span> : null}
-          </div>
+        {delta && deltaStyle ? (
+          <span
+            className={`font-mono tabular-nums text-[11px] font-medium px-1.5 py-0.5 rounded inline-flex items-center gap-0.5 ${deltaStyle.bg} ${deltaStyle.text}`}
+          >
+            {delta.positive ? "↑" : "↓"} {delta.label.replace(/^[+-]/, "")}
+          </span>
         ) : null}
-      </CardContent>
-    </Card>
+      </div>
+
+      <div className="font-mono font-medium tabular-nums text-[30px] leading-none tracking-tight mt-2.5">
+        {value}
+      </div>
+
+      {hint ? (
+        <div className="font-mono text-[10px] tracking-wide text-muted-foreground/60 lowercase mt-1.5">
+          {hint}
+        </div>
+      ) : null}
+    </div>
   );
 }
