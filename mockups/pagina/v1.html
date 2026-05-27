@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup · Detalhamento por Página · v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg: #09090b;
+    --bg-card: #141418;
+    --bg-card-hi: #1a1a1f;
+    --border: #232328;
+    --border-hi: #34343b;
+    --text: #fafafa;
+    --text-muted: #a1a1aa;
+    --text-faint: #52525b;
+    --winner: #34d399;
+    --winner-soft: rgba(52, 211, 153, 0.05);
+    --winner-border: rgba(52, 211, 153, 0.35);
+    --loser: #f87171;
+    --loser-soft: rgba(248, 113, 113, 0.05);
+    --loser-border: rgba(248, 113, 113, 0.35);
+    --warn: #fbbf24;
+    --warn-soft: rgba(251, 191, 36, 0.04);
+    --warn-border: rgba(251, 191, 36, 0.3);
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Geist', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.005em;
+  }
+  .mono { font-family: 'Geist Mono', monospace; font-feature-settings: 'tnum', 'zero'; }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  .stat-label {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-weight: 500;
+  }
+  .stat-value-big {
+    font-family: 'Geist Mono', monospace;
+    font-feature-settings: 'tnum';
+    font-weight: 500;
+    font-size: 30px;
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 180ms, background 180ms;
+  }
+  .card:hover { border-color: var(--border-hi); background: var(--bg-card-hi); }
+  .card.is-winner { border-color: var(--winner-border); }
+  .card.is-winner::before { content: ""; position: absolute; inset: 0; background: var(--winner-soft); pointer-events: none; }
+  .card.is-loser { border-color: var(--loser-border); }
+  .card.is-loser::before { content: ""; position: absolute; inset: 0; background: var(--loser-soft); pointer-events: none; }
+  .card.is-warn { border-color: var(--warn-border); }
+  .card.is-warn::before { content: ""; position: absolute; inset: 0; background: var(--warn-soft); pointer-events: none; }
+
+  .meta {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: var(--text-faint);
+    text-transform: lowercase;
+  }
+  .tag {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+    padding: 3px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+  .rule {
+    height: 1px;
+    background: linear-gradient(90deg, var(--border) 0%, transparent 100%);
+  }
+
+  /* Favicon-style placeholder */
+  .favicon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Geist Mono', monospace;
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--text);
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+  }
+
+  .url-host {
+    font-family: 'Geist Mono', monospace;
+    font-size: 13px;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .url-path {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.01em;
+  }
+
+  .stage-bar {
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+    overflow: hidden;
+    position: relative;
+  }
+  .stage-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<main class="max-w-[1400px] mx-auto px-6 md:px-12 py-10">
+
+  <header class="mb-8">
+    <div class="flex items-end justify-between gap-6 mb-4">
+      <div>
+        <div class="meta mb-2">por página de destino · ordenado por gasto</div>
+        <h1 class="text-3xl md:text-4xl font-medium leading-tight tracking-tight">
+          Detalhamento por página
+        </h1>
+      </div>
+      <div class="text-right shrink-0 hidden md:block">
+        <div class="meta">27 mai → 27 mai</div>
+        <div class="text-sm text-[var(--text-muted)] mt-1">
+          <span class="mono tabular">11</span> páginas
+          ·
+          <span class="mono tabular">R$ 1.745</span> gastos
+          ·
+          <span class="mono tabular">10</span> compras
+        </div>
+      </div>
+    </div>
+    <div class="rule"></div>
+  </header>
+
+  <!-- Highlights -->
+  <section class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
+    <div class="card rounded-md p-4 is-winner">
+      <div class="relative flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="stat-label">Melhor CPA</div>
+          <div class="mono font-medium tabular text-xl mt-2 text-[var(--winner)]" style="letter-spacing: -0.03em;">R$ 76,29</div>
+          <div class="text-xs text-[var(--text-muted)] mt-1.5 truncate font-mono">guia-alzheimer-v1-hc.lovable.app</div>
+        </div>
+        <div class="tag" style="background: rgba(52, 211, 153, 0.15); color: var(--winner);">↑</div>
+      </div>
+    </div>
+    <div class="card rounded-md p-4 is-loser">
+      <div class="relative flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="stat-label">Pior CPA</div>
+          <div class="mono font-medium tabular text-xl mt-2 text-[var(--loser)]" style="letter-spacing: -0.03em;">R$ 114,98</div>
+          <div class="text-xs text-[var(--text-muted)] mt-1.5 truncate font-mono">guia-alzheimer-v2.lovable.app</div>
+        </div>
+        <div class="tag" style="background: rgba(248, 113, 113, 0.15); color: var(--loser);">↓</div>
+      </div>
+    </div>
+    <div class="card rounded-md p-4 is-warn">
+      <div class="relative flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="stat-label">Maior gasto · 0 compras</div>
+          <div class="mono font-medium tabular text-xl mt-2 text-[var(--warn)]" style="letter-spacing: -0.03em;">R$ 202,34</div>
+          <div class="text-xs text-[var(--text-muted)] mt-1.5 truncate font-mono">guia-alzheimer-v1-a1.lovable.app/?utm_content=GA-A1</div>
+        </div>
+        <div class="tag" style="background: rgba(251, 191, 36, 0.15); color: var(--warn);">⚠</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pages list -->
+  <section class="space-y-3">
+
+    <!-- WINNER -->
+    <article class="card rounded-md is-winner">
+      <div class="relative grid grid-cols-[1.4fr_auto_auto] items-stretch">
+        <!-- LEFT: URL with favicon -->
+        <div class="p-5 min-w-0 border-r border-[var(--border)]">
+          <div class="flex items-start gap-3">
+            <div class="favicon" style="background: linear-gradient(135deg, #34d399 0%, #10b981 100%); color: #042f2e;">GA</div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                <div class="tag" style="background: var(--winner); color: #042f2e;">↑ Melhor CPA</div>
+              </div>
+              <div class="url-host truncate">guia-alzheimer-v1-hc.lovable.app</div>
+              <div class="url-path truncate">/</div>
+              <a href="#" class="meta hover:text-[var(--text)] transition-colors inline-flex items-center gap-1 mt-2">
+                abrir página ↗
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- MIDDLE: hero metrics -->
+        <div class="p-5 px-8 border-r border-[var(--border)] flex items-center gap-8">
+          <div>
+            <div class="stat-label">CPA</div>
+            <div class="stat-value-big text-[var(--winner)] mt-1.5">R$ 76,29</div>
+          </div>
+          <div>
+            <div class="stat-label">Compras</div>
+            <div class="stat-value-big mt-1.5">1</div>
+          </div>
+          <div>
+            <div class="stat-label">Gasto</div>
+            <div class="stat-value-big mt-1.5">R$ 76</div>
+          </div>
+        </div>
+
+        <!-- RIGHT: funnel pós-clique -->
+        <div class="p-5 min-w-[280px]">
+          <div class="stat-label mb-3">Funil pós-clique</div>
+          <div class="space-y-2.5">
+            <!-- Conn (PV/Click) -->
+            <div>
+              <div class="flex items-baseline justify-between text-xs mb-1">
+                <span class="text-[var(--text-muted)]">Click → PV</span>
+                <span class="mono tabular font-medium">71,4%</span>
+              </div>
+              <div class="stage-bar">
+                <div class="stage-bar-fill" style="width: 71%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);"></div>
+              </div>
+            </div>
+            <!-- LP→CHKT -->
+            <div>
+              <div class="flex items-baseline justify-between text-xs mb-1">
+                <span class="text-[var(--text-muted)]">PV → CHKT</span>
+                <span class="mono tabular font-medium">5,0%</span>
+              </div>
+              <div class="stage-bar">
+                <div class="stage-bar-fill" style="width: 5%; background: linear-gradient(90deg, #8b5cf6 0%, #a855f7 100%);"></div>
+              </div>
+            </div>
+            <!-- CHKT→💰 -->
+            <div>
+              <div class="flex items-baseline justify-between text-xs mb-1">
+                <span class="text-[var(--text-muted)]">CHKT → 💰</span>
+                <span class="mono tabular font-medium text-[var(--winner)]">50,0%</span>
+              </div>
+              <div class="stage-bar">
+                <div class="stage-bar-fill" style="width: 50%; background: var(--winner);"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- spend perf bar -->
+      <div class="h-0.5 bg-white/[0.03] relative">
+        <div style="width: 4%; height: 100%; background: var(--winner); opacity: 0.65;"></div>
+      </div>
+    </article>
+
+    <!-- LOSER -->
+    <article class="card rounded-md is-loser">
+      <div class="relative grid grid-cols-[1.4fr_auto_auto] items-stretch">
+        <div class="p-5 min-w-0 border-r border-[var(--border)]">
+          <div class="flex items-start gap-3">
+            <div class="favicon" style="background: linear-gradient(135deg, #f87171 0%, #ef4444 100%); color: #4c0519;">GA</div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                <div class="tag" style="background: var(--loser); color: #4c0519;">↓ Pior CPA</div>
+              </div>
+              <div class="url-host truncate">guia-alzheimer-v2.lovable.app</div>
+              <div class="url-path truncate">/</div>
+              <a href="#" class="meta hover:text-[var(--text)] transition-colors inline-flex items-center gap-1 mt-2">
+                abrir página ↗
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-5 px-8 border-r border-[var(--border)] flex items-center gap-8">
+          <div>
+            <div class="stat-label">CPA</div>
+            <div class="stat-value-big text-[var(--loser)] mt-1.5">R$ 114,98</div>
+          </div>
+          <div>
+            <div class="stat-label">Compras</div>
+            <div class="stat-value-big mt-1.5">2</div>
+          </div>
+          <div>
+            <div class="stat-label">Gasto</div>
+            <div class="stat-value-big mt-1.5">R$ 230</div>
+          </div>
+        </div>
+
+        <div class="p-5 min-w-[280px]">
+          <div class="stat-label mb-3">Funil pós-clique</div>
+          <div class="space-y-2.5">
+            <div>
+              <div class="flex items-baseline justify-between text-xs mb-1">
+                <span class="text-[var(--text-muted)]">Click → PV</span>
+                <span class="mono tabular font-medium">77,3%</span>
+              </div>
+              <div class="stage-bar"><div class="stage-bar-fill" style="width: 77%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);"></div></div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between text-xs mb-1">
+                <span class="text-[var(--text-muted)]">PV → CHKT</span>
+                <span class="mono tabular font-medium">3,5%</span>
+              </div>
+              <div class="stage-bar"><div class="stage-bar-fill" style="width: 3.5%; background: linear-gradient(90deg, #8b5cf6 0%, #a855f7 100%);"></div></div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between text-xs mb-1">
+                <span class="text-[var(--text-muted)]">CHKT → 💰</span>
+                <span class="mono tabular font-medium text-[var(--loser)]">50,0%</span>
+              </div>
+              <div class="stage-bar"><div class="stage-bar-fill" style="width: 50%; background: var(--loser);"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="h-0.5 bg-white/[0.03] relative">
+        <div style="width: 13%; height: 100%; background: var(--loser); opacity: 0.65;"></div>
+      </div>
+    </article>
+
+    <!-- NEUTRAL with high spend -->
+    <article class="card rounded-md">
+      <div class="relative grid grid-cols-[1.4fr_auto_auto] items-stretch">
+        <div class="p-5 min-w-0 border-r border-[var(--border)]">
+          <div class="flex items-start gap-3">
+            <div class="favicon" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">GA</div>
+            <div class="min-w-0 flex-1">
+              <div class="url-host truncate">guia-alzheimer-v1-a1.lovable.app</div>
+              <div class="url-path truncate">/?utm_content=GA-A2</div>
+              <a href="#" class="meta hover:text-[var(--text)] transition-colors inline-flex items-center gap-1 mt-2">
+                abrir página ↗
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-5 px-8 border-r border-[var(--border)] flex items-center gap-8">
+          <div>
+            <div class="stat-label">CPA</div>
+            <div class="stat-value-big text-[var(--winner)] mt-1.5">R$ 80,98</div>
+          </div>
+          <div>
+            <div class="stat-label">Compras</div>
+            <div class="stat-value-big mt-1.5">6</div>
+          </div>
+          <div>
+            <div class="stat-label">Gasto</div>
+            <div class="stat-value-big mt-1.5">R$ 486</div>
+          </div>
+        </div>
+
+        <div class="p-5 min-w-[280px]">
+          <div class="stat-label mb-3">Funil pós-clique</div>
+          <div class="space-y-2.5">
+            <div>
+              <div class="flex items-baseline justify-between text-xs mb-1">
+                <span class="text-[var(--text-muted)]">Click → PV</span>
+                <span class="mono tabular font-medium">72,8%</span>
+              </div>
+              <div class="stage-bar"><div class="stage-bar-fill" style="width: 73%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);"></div></div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between text-xs mb-1">
+                <span class="text-[var(--text-muted)]">PV → CHKT</span>
+                <span class="mono tabular font-medium">5,8%</span>
+              </div>
+              <div class="stage-bar"><div class="stage-bar-fill" style="width: 5.8%; background: linear-gradient(90deg, #8b5cf6 0%, #a855f7 100%);"></div></div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between text-xs mb-1">
+                <span class="text-[var(--text-muted)]">CHKT → 💰</span>
+                <span class="mono tabular font-medium text-[var(--winner)]">30,0%</span>
+              </div>
+              <div class="stage-bar"><div class="stage-bar-fill" style="width: 30%; background: var(--winner);"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="h-0.5 bg-white/[0.03] relative">
+        <div style="width: 28%; height: 100%; background: var(--text-muted); opacity: 0.4;"></div>
+      </div>
+    </article>
+
+    <!-- WARN — 0 purchases -->
+    <article class="card rounded-md is-warn">
+      <div class="relative grid grid-cols-[1.4fr_auto_auto] items-stretch">
+        <div class="p-5 min-w-0 border-r border-[var(--border)]">
+          <div class="flex items-start gap-3">
+            <div class="favicon" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #1c1917;">GA</div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                <div class="tag" style="background: var(--warn); color: #1c1917;">⚠ 0 compras</div>
+              </div>
+              <div class="url-host truncate">guia-alzheimer-v1-a1.lovable.app</div>
+              <div class="url-path truncate">/?utm_content=GA-A1</div>
+              <a href="#" class="meta hover:text-[var(--text)] transition-colors inline-flex items-center gap-1 mt-2">
+                abrir página ↗
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-5 px-8 border-r border-[var(--border)] flex items-center gap-8">
+          <div>
+            <div class="stat-label">CPA</div>
+            <div class="stat-value-big text-[var(--text-faint)] mt-1.5">—</div>
+          </div>
+          <div>
+            <div class="stat-label">Compras</div>
+            <div class="stat-value-big text-[var(--text-faint)] mt-1.5">0</div>
+          </div>
+          <div>
+            <div class="stat-label">Gasto</div>
+            <div class="stat-value-big mt-1.5">R$ 202</div>
+          </div>
+        </div>
+
+        <div class="p-5 min-w-[280px]">
+          <div class="stat-label mb-3">Funil pós-clique</div>
+          <div class="space-y-2.5">
+            <div>
+              <div class="flex items-baseline justify-between text-xs mb-1">
+                <span class="text-[var(--text-muted)]">Click → PV</span>
+                <span class="mono tabular font-medium">70,6%</span>
+              </div>
+              <div class="stage-bar"><div class="stage-bar-fill" style="width: 71%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);"></div></div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between text-xs mb-1">
+                <span class="text-[var(--text-muted)]">PV → CHKT</span>
+                <span class="mono tabular font-medium text-[var(--warn)]">0,7%</span>
+              </div>
+              <div class="stage-bar"><div class="stage-bar-fill" style="width: 0.7%; background: var(--warn);"></div></div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between text-xs mb-1">
+                <span class="text-[var(--text-muted)]">CHKT → 💰</span>
+                <span class="mono tabular text-[var(--text-faint)]">—</span>
+              </div>
+              <div class="stage-bar opacity-30"><div class="stage-bar-fill" style="width: 0%;"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="h-0.5 bg-white/[0.03] relative">
+        <div style="width: 12%; height: 100%; background: var(--warn); opacity: 0.6;"></div>
+      </div>
+    </article>
+
+    <!-- Edge case — Sem URL -->
+    <article class="card rounded-md opacity-60">
+      <div class="relative grid grid-cols-[1.4fr_auto_auto] items-stretch">
+        <div class="p-5 min-w-0 border-r border-[var(--border)]">
+          <div class="flex items-start gap-3">
+            <div class="favicon" style="background: var(--bg-card-hi); color: var(--text-faint); border-style: dashed;">?</div>
+            <div class="min-w-0 flex-1">
+              <div class="url-host truncate text-[var(--text-faint)] italic">Sem URL identificada</div>
+              <div class="url-path truncate">criativo sem creative.object_story_spec — ads antigos / arquivados</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-5 px-8 border-r border-[var(--border)] flex items-center gap-8">
+          <div>
+            <div class="stat-label">CPA</div>
+            <div class="stat-value-big text-[var(--text-faint)] mt-1.5">—</div>
+          </div>
+          <div>
+            <div class="stat-label">Compras</div>
+            <div class="stat-value-big text-[var(--text-faint)] mt-1.5">0</div>
+          </div>
+          <div>
+            <div class="stat-label">Gasto</div>
+            <div class="stat-value-big mt-1.5 text-[var(--text-muted)]">R$ 28</div>
+          </div>
+        </div>
+
+        <div class="p-5 min-w-[280px]">
+          <div class="stat-label mb-3">Funil pós-clique</div>
+          <div class="text-xs text-[var(--text-faint)] italic">sem dados de funil</div>
+        </div>
+      </div>
+      <div class="h-0.5 bg-white/[0.03] relative">
+        <div style="width: 2%; height: 100%; background: var(--text-muted); opacity: 0.3;"></div>
+      </div>
+    </article>
+
+  </section>
+
+  <!-- Totals strip -->
+  <section class="mt-6 card rounded-md p-5">
+    <div class="grid grid-cols-2 md:grid-cols-6 gap-6">
+      <div>
+        <div class="stat-label">Páginas únicas</div>
+        <div class="mono font-medium tabular text-xl mt-1.5" style="letter-spacing: -0.03em;">11</div>
+      </div>
+      <div>
+        <div class="stat-label">Total Compras</div>
+        <div class="mono font-medium tabular text-xl mt-1.5" style="letter-spacing: -0.03em;">10</div>
+      </div>
+      <div>
+        <div class="stat-label">CPA Médio</div>
+        <div class="mono font-medium tabular text-xl mt-1.5" style="letter-spacing: -0.03em;">R$ 174,53</div>
+      </div>
+      <div>
+        <div class="stat-label">Click → PV</div>
+        <div class="mono font-medium tabular text-xl mt-1.5" style="letter-spacing: -0.03em;">71,2%</div>
+      </div>
+      <div>
+        <div class="stat-label">PV → CHKT</div>
+        <div class="mono font-medium tabular text-xl mt-1.5" style="letter-spacing: -0.03em;">7,7%</div>
+      </div>
+      <div>
+        <div class="stat-label">CHKT → 💰</div>
+        <div class="mono font-medium tabular text-xl mt-1.5" style="letter-spacing: -0.03em;">12,7%</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mt-10 pt-5 border-t border-[var(--border)]">
+    <p class="meta">v1 · página com favicon + funil pós-clique como barras horizontais</p>
+  </footer>
+
+</main>
+
+</body>
+</html>
