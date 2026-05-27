@@ -25,11 +25,13 @@ describe("extractConversions", () => {
     expect(c.landing_page_view).toBe(144);
   });
 
-  it("extrai landing_page_view do alias fb_pixel_view_content", () => {
+  it("ignora fb_pixel_view_content (ViewContent é evento distinto de LPV)", () => {
+    // Validado contra Looker Studio: incluir view_content inflava o número
+    // (260 vs 144 esperado em 2026-05-26 no /guia).
     const c = extractConversions(
       insight([{ action_type: "offsite_conversion.fb_pixel_view_content", value: "97" }]),
     );
-    expect(c.landing_page_view).toBe(97);
+    expect(c.landing_page_view).toBe(0);
   });
 
   it("extrai initiate_checkout escolhendo omni quando disponível (sem somar duplicadas)", () => {

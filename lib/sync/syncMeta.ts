@@ -155,9 +155,10 @@ export function extractConversions(insight: MetaInsight): AdConversions {
     t === "page_engagement";
 
   // LandingPageView vem em action_type único; somar é seguro.
-  const isLandingPageView = (t: string) =>
-    t === "landing_page_view" ||
-    t === "offsite_conversion.fb_pixel_view_content";
+  // NÃO incluir `offsite_conversion.fb_pixel_view_content` — é evento
+  // diferente (Pixel ViewContent custom) e pode coexistir com LPV, o que
+  // duplicaria a contagem. Validado contra Looker Studio em 2026-05-27.
+  const isLandingPageView = (t: string) => t === "landing_page_view";
 
   // InitiateCheckout sofre o mesmo problema do purchase: Meta reporta o
   // MESMO evento em vários action_type ao mesmo tempo (omni/offsite/pixel).
