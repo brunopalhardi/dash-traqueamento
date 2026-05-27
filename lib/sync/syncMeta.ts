@@ -5,6 +5,7 @@ import { adInsightsDaily, type AdConversions } from "@/lib/schema/insights";
 import { syncJobs } from "@/lib/schema/sync";
 import type { MetaClient } from "@/lib/meta/client";
 import type { DatePreset, MetaCreative, MetaInsight, MetaInsightAction } from "@/lib/meta/types";
+import { extractLandingUrl } from "@/lib/meta/extractors";
 import { MetaAuthError } from "@/lib/meta/errors";
 
 /**
@@ -308,6 +309,14 @@ export async function syncMeta(
       );
 
       const apiCreatives = await opts.client.getCreativesByIds(referencedCreativeIds);
+
+      // Pre-computa URL de destino por meta_id de criativo para reuso no
+      // upsert de ads abaixo (cada ad referencia 1 creative.id).
+      const creativeLandingUrls = new Map<string, string | null>();
+      for (const cr of apiCreatives) {
+        creativeLandingUrls.set(cr.id, extractLandingUrl(cr));
+      }
+
       await inBatches(apiCreatives, UPSERT_BATCH, async (cr) => {
         // image_url quando disponível (alta res); thumbnail_url default de fallback.
         const thumb = cr.image_url ?? cr.thumbnail_url;
@@ -351,6 +360,9 @@ export async function syncMeta(
         const adsetDbId = adsetIdMap.get(a.adset_id);
         if (!adsetDbId) return;
         const creativeDbId = a.creative?.id ? creativeIdMap.get(a.creative.id) ?? null : null;
+        const landingUrl = a.creative?.id
+          ? creativeLandingUrls.get(a.creative.id) ?? null
+          : null;
         await db
           .insert(ads)
           .values({
@@ -360,6 +372,7 @@ export async function syncMeta(
             status: a.status,
             creativeId: creativeDbId,
             previewUrl: a.preview_shareable_link,
+            landingUrl,
           })
           .onConflictDoUpdate({
             target: ads.metaId,
@@ -368,6 +381,7 @@ export async function syncMeta(
               status: a.status,
               creativeId: creativeDbId,
               previewUrl: a.preview_shareable_link,
+              landingUrl,
               updatedAt: new Date(),
             },
           });
