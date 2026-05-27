@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup · Diário do Funil · v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg: #09090b;
+    --bg-card: #141418;
+    --bg-card-hi: #1a1a1f;
+    --border: #232328;
+    --border-hi: #34343b;
+    --text: #fafafa;
+    --text-muted: #a1a1aa;
+    --text-faint: #52525b;
+    --winner: #34d399;
+    --winner-soft: rgba(52, 211, 153, 0.05);
+    --winner-border: rgba(52, 211, 153, 0.35);
+    --loser: #f87171;
+    --loser-soft: rgba(248, 113, 113, 0.05);
+    --loser-border: rgba(248, 113, 113, 0.35);
+    --warn: #fbbf24;
+    --warn-soft: rgba(251, 191, 36, 0.04);
+    --warn-border: rgba(251, 191, 36, 0.3);
+    --stage-impr: #4f46e5;
+    --stage-click: #6366f1;
+    --stage-pv: #8b5cf6;
+    --stage-chkt: #a855f7;
+    --stage-buy: #34d399;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Geist', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.005em;
+  }
+  .mono { font-family: 'Geist Mono', monospace; font-feature-settings: 'tnum', 'zero'; }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  .stat-label {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-weight: 500;
+  }
+  .stat-value-big {
+    font-family: 'Geist Mono', monospace;
+    font-feature-settings: 'tnum';
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+  .stat-value-trend {
+    font-family: 'Geist Mono', monospace;
+    font-feature-settings: 'tnum';
+    font-weight: 500;
+    font-size: 32px;
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 180ms, background 180ms;
+  }
+  .card:hover { border-color: var(--border-hi); background: var(--bg-card-hi); }
+  .card.is-winner { border-color: var(--winner-border); }
+  .card.is-winner::before { content: ""; position: absolute; inset: 0; background: var(--winner-soft); pointer-events: none; }
+  .card.is-loser { border-color: var(--loser-border); }
+  .card.is-loser::before { content: ""; position: absolute; inset: 0; background: var(--loser-soft); pointer-events: none; }
+  .card.is-warn { border-color: var(--warn-border); }
+  .card.is-warn::before { content: ""; position: absolute; inset: 0; background: var(--warn-soft); pointer-events: none; }
+  .card.is-weekend { background: rgba(255,255,255,0.015); }
+
+  .meta {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: var(--text-faint);
+    text-transform: lowercase;
+  }
+  .tag {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+    padding: 3px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+  .rule {
+    height: 1px;
+    background: linear-gradient(90deg, var(--border) 0%, transparent 100%);
+  }
+
+  /* Date block */
+  .date-day {
+    font-family: 'Geist Mono', monospace;
+    font-feature-settings: 'tnum';
+    font-weight: 500;
+    font-size: 36px;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--text);
+  }
+  .date-month {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .date-weekday {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
+  /* Mini funnel stages */
+  .mini-funnel {
+    padding-top: 16px; /* room for labels acima */
+  }
+  .mini-stage {
+    height: 28px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    flex: 1;
+    overflow: visible;
+  }
+  .mini-stage::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: var(--stage-bg, var(--stage-impr));
+    opacity: 0.15;
+    border-radius: 3px;
+  }
+  .mini-stage[data-label]::after {
+    content: attr(data-label);
+    position: absolute;
+    top: -13px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: 'Geist Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-weight: 500;
+    line-height: 1;
+  }
+  .mini-stage > span {
+    position: relative;
+    z-index: 1;
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  .mini-stage.is-empty { opacity: 0.35; }
+  .mini-stage.is-empty > span { color: var(--text-faint); }
+  .mini-stage-divider {
+    width: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-faint);
+    font-size: 11px;
+  }
+
+  /* Sparkline SVG */
+  .spark {
+    width: 100%;
+    height: 40px;
+  }
+  .spark path.line {
+    fill: none;
+    stroke-width: 1.5;
+  }
+  .spark path.area {
+    opacity: 0.12;
+  }
+  .spark circle.dot {
+    stroke-width: 0;
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<main class="max-w-[1400px] mx-auto px-6 md:px-12 py-10">
+
+  <header class="mb-8">
+    <div class="flex items-end justify-between gap-6 mb-4">
+      <div>
+        <div class="meta mb-2">diário · 18 → 27 mai · 10 dias</div>
+        <h1 class="text-3xl md:text-4xl font-medium leading-tight tracking-tight">
+          Detalhamento diário do funil
+        </h1>
+      </div>
+      <div class="text-right shrink-0 hidden md:block">
+        <div class="meta">27 mai → 27 mai</div>
+        <div class="text-sm text-[var(--text-muted)] mt-1">
+          <span class="mono tabular">10</span> dias
+          ·
+          <span class="mono tabular">R$ 1.745</span> gastos
+          ·
+          <span class="mono tabular">10</span> compras
+        </div>
+      </div>
+    </div>
+    <div class="rule"></div>
+  </header>
+
+  <!-- TREND CARDS — sparklines no topo -->
+  <section class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8">
+    <!-- CPA trend -->
+    <div class="card rounded-md p-4">
+      <div class="flex items-start justify-between mb-1">
+        <div class="stat-label">CPA</div>
+        <div class="tag" style="background: rgba(248, 113, 113, 0.15); color: var(--loser);">↑ +12%</div>
+      </div>
+      <div class="stat-value-trend mt-1">R$ 174,53</div>
+      <svg class="spark mt-3" viewBox="0 0 200 40" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="grad-cpa" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#f87171" />
+            <stop offset="100%" stop-color="#f87171" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        <path class="area" fill="url(#grad-cpa)"
+          d="M 0 28 L 22 32 L 44 25 L 66 18 L 88 22 L 110 15 L 132 20 L 154 12 L 176 16 L 200 8 L 200 40 L 0 40 Z" />
+        <path class="line" stroke="#f87171"
+          d="M 0 28 L 22 32 L 44 25 L 66 18 L 88 22 L 110 15 L 132 20 L 154 12 L 176 16 L 200 8" />
+        <circle class="dot" cx="200" cy="8" r="3" fill="#f87171" />
+      </svg>
+      <div class="flex justify-between text-[10px] text-[var(--text-faint)] mt-1.5">
+        <span class="mono">18/mai</span>
+        <span class="mono">27/mai</span>
+      </div>
+    </div>
+
+    <!-- Compras trend -->
+    <div class="card rounded-md p-4">
+      <div class="flex items-start justify-between mb-1">
+        <div class="stat-label">Compras</div>
+        <div class="tag" style="background: rgba(52, 211, 153, 0.15); color: var(--winner);">↑ +25%</div>
+      </div>
+      <div class="stat-value-trend mt-1">10</div>
+      <svg class="spark mt-3" viewBox="0 0 200 40" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="grad-buy" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#34d399" />
+            <stop offset="100%" stop-color="#34d399" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        <path class="area" fill="url(#grad-buy)"
+          d="M 0 30 L 22 32 L 44 28 L 66 20 L 88 22 L 110 18 L 132 14 L 154 10 L 176 8 L 200 6 L 200 40 L 0 40 Z" />
+        <path class="line" stroke="#34d399"
+          d="M 0 30 L 22 32 L 44 28 L 66 20 L 88 22 L 110 18 L 132 14 L 154 10 L 176 8 L 200 6" />
+        <circle class="dot" cx="200" cy="6" r="3" fill="#34d399" />
+      </svg>
+      <div class="flex justify-between text-[10px] text-[var(--text-faint)] mt-1.5">
+        <span class="mono">18/mai</span>
+        <span class="mono">27/mai</span>
+      </div>
+    </div>
+
+    <!-- Gasto trend -->
+    <div class="card rounded-md p-4">
+      <div class="flex items-start justify-between mb-1">
+        <div class="stat-label">Gasto / dia</div>
+        <div class="tag" style="background: rgba(251, 191, 36, 0.15); color: var(--warn);">↑ +56%</div>
+      </div>
+      <div class="stat-value-trend mt-1">R$ 174,53</div>
+      <svg class="spark mt-3" viewBox="0 0 200 40" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="grad-spend" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#fbbf24" />
+            <stop offset="100%" stop-color="#fbbf24" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        <path class="area" fill="url(#grad-spend)"
+          d="M 0 32 L 22 28 L 44 30 L 66 22 L 88 18 L 110 24 L 132 16 L 154 20 L 176 12 L 200 6 L 200 40 L 0 40 Z" />
+        <path class="line" stroke="#fbbf24"
+          d="M 0 32 L 22 28 L 44 30 L 66 22 L 88 18 L 110 24 L 132 16 L 154 20 L 176 12 L 200 6" />
+        <circle class="dot" cx="200" cy="6" r="3" fill="#fbbf24" />
+      </svg>
+      <div class="flex justify-between text-[10px] text-[var(--text-faint)] mt-1.5">
+        <span class="mono">18/mai</span>
+        <span class="mono">27/mai</span>
+      </div>
+    </div>
+
+    <!-- ROAS / Conn rate trend -->
+    <div class="card rounded-md p-4">
+      <div class="flex items-start justify-between mb-1">
+        <div class="stat-label">Conn. Rate</div>
+        <div class="tag" style="background: rgba(52, 211, 153, 0.15); color: var(--winner);">↑ +7pp</div>
+      </div>
+      <div class="stat-value-trend mt-1">71,3%</div>
+      <svg class="spark mt-3" viewBox="0 0 200 40" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="grad-conn" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#8b5cf6" />
+            <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        <path class="area" fill="url(#grad-conn)"
+          d="M 0 24 L 22 26 L 44 22 L 66 24 L 88 18 L 110 16 L 132 20 L 154 14 L 176 12 L 200 10 L 200 40 L 0 40 Z" />
+        <path class="line" stroke="#8b5cf6"
+          d="M 0 24 L 22 26 L 44 22 L 66 24 L 88 18 L 110 16 L 132 20 L 154 14 L 176 12 L 200 10" />
+        <circle class="dot" cx="200" cy="10" r="3" fill="#8b5cf6" />
+      </svg>
+      <div class="flex justify-between text-[10px] text-[var(--text-faint)] mt-1.5">
+        <span class="mono">18/mai</span>
+        <span class="mono">27/mai</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Daily row-cards -->
+  <section class="space-y-2">
+
+    <!-- BEST DAY -->
+    <article class="card rounded-md is-winner">
+      <div class="relative grid grid-cols-[100px_auto_1fr_auto] items-center gap-4 px-5 py-4">
+        <!-- Date block -->
+        <div>
+          <div class="date-day">26</div>
+          <div class="date-month mt-1">mai</div>
+          <div class="date-weekday mt-0.5">seg</div>
+        </div>
+
+        <!-- Hero stats -->
+        <div class="flex items-center gap-6 lg:gap-8">
+          <div>
+            <div class="stat-label">CPA</div>
+            <div class="stat-value-big text-[var(--winner)] mt-1.5">R$ 115,76</div>
+          </div>
+          <div>
+            <div class="stat-label">Compras</div>
+            <div class="stat-value-big mt-1.5">2</div>
+          </div>
+          <div>
+            <div class="stat-label">Gasto</div>
+            <div class="stat-value-big mt-1.5">R$ 231,53</div>
+          </div>
+        </div>
+
+        <!-- Mini funnel inline -->
+        <div class="flex items-center gap-1 mini-funnel">
+          <div class="mini-stage" data-label="IMPR" style="--stage-bg: var(--stage-impr);">
+            <span>4.544</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="CLIQUES" style="--stage-bg: var(--stage-click);">
+            <span>172</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="PAGEVIEWS" style="--stage-bg: var(--stage-pv);">
+            <span>144</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="CHECKOUT" style="--stage-bg: var(--stage-chkt);">
+            <span>8</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="COMPRAS" style="--stage-bg: var(--stage-buy);">
+            <span class="text-[var(--winner)]">2</span>
+          </div>
+        </div>
+
+        <!-- Tag -->
+        <div class="text-right">
+          <div class="tag" style="background: rgba(52, 211, 153, 0.18); color: var(--winner);">↑ MELHOR DIA</div>
+          <div class="meta mt-2">CTR 3,79%</div>
+        </div>
+      </div>
+      <div class="h-0.5 bg-white/[0.03] relative">
+        <div style="width: 13%; height: 100%; background: var(--winner); opacity: 0.65;"></div>
+      </div>
+    </article>
+
+    <!-- Day 25 -->
+    <article class="card rounded-md">
+      <div class="relative grid grid-cols-[100px_auto_1fr_auto] items-center gap-4 px-5 py-4">
+        <div>
+          <div class="date-day">25</div>
+          <div class="date-month mt-1">mai</div>
+          <div class="date-weekday mt-0.5">dom</div>
+        </div>
+
+        <div class="flex items-center gap-6 lg:gap-8">
+          <div>
+            <div class="stat-label">CPA</div>
+            <div class="stat-value-big text-[var(--text-faint)] mt-1.5">—</div>
+          </div>
+          <div>
+            <div class="stat-label">Compras</div>
+            <div class="stat-value-big text-[var(--text-faint)] mt-1.5">0</div>
+          </div>
+          <div>
+            <div class="stat-label">Gasto</div>
+            <div class="stat-value-big mt-1.5">R$ 243,76</div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1 mini-funnel">
+          <div class="mini-stage" data-label="IMPR" style="--stage-bg: var(--stage-impr);">
+            <span>4.607</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="CLIQUES" style="--stage-bg: var(--stage-click);">
+            <span>167</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="PAGEVIEWS" style="--stage-bg: var(--stage-pv);">
+            <span>129</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="CHECKOUT" style="--stage-bg: var(--stage-chkt);">
+            <span>9</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage is-empty" data-label="COMPRAS" style="--stage-bg: var(--stage-buy);">
+            <span>0</span>
+          </div>
+        </div>
+
+        <div class="text-right">
+          <div class="meta">CTR 3,62%</div>
+          <div class="meta mt-1">Conn 77,2%</div>
+        </div>
+      </div>
+      <div class="h-0.5 bg-white/[0.03] relative">
+        <div style="width: 14%; height: 100%; background: var(--text-muted); opacity: 0.4;"></div>
+      </div>
+    </article>
+
+    <!-- WORST DAY -->
+    <article class="card rounded-md is-loser">
+      <div class="relative grid grid-cols-[100px_auto_1fr_auto] items-center gap-4 px-5 py-4">
+        <div>
+          <div class="date-day">24</div>
+          <div class="date-month mt-1">mai</div>
+          <div class="date-weekday mt-0.5">sáb</div>
+        </div>
+
+        <div class="flex items-center gap-6 lg:gap-8">
+          <div>
+            <div class="stat-label">CPA</div>
+            <div class="stat-value-big text-[var(--loser)] mt-1.5">R$ 145,85</div>
+          </div>
+          <div>
+            <div class="stat-label">Compras</div>
+            <div class="stat-value-big mt-1.5">2</div>
+          </div>
+          <div>
+            <div class="stat-label">Gasto</div>
+            <div class="stat-value-big mt-1.5">R$ 291,70</div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1 mini-funnel">
+          <div class="mini-stage" data-label="IMPR" style="--stage-bg: var(--stage-impr);">
+            <span>6.039</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="CLIQUES" style="--stage-bg: var(--stage-click);">
+            <span>239</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="PAGEVIEWS" style="--stage-bg: var(--stage-pv);">
+            <span>164</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="CHECKOUT" style="--stage-bg: var(--stage-chkt);">
+            <span>10</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="COMPRAS" style="--stage-bg: var(--stage-buy);">
+            <span class="text-[var(--loser)]">2</span>
+          </div>
+        </div>
+
+        <div class="text-right">
+          <div class="tag" style="background: rgba(248, 113, 113, 0.18); color: var(--loser);">↓ PIOR CPA</div>
+          <div class="meta mt-2">CTR 3,96%</div>
+        </div>
+      </div>
+      <div class="h-0.5 bg-white/[0.03] relative">
+        <div style="width: 17%; height: 100%; background: var(--loser); opacity: 0.65;"></div>
+      </div>
+    </article>
+
+    <!-- Day 23 -->
+    <article class="card rounded-md is-warn">
+      <div class="relative grid grid-cols-[100px_auto_1fr_auto] items-center gap-4 px-5 py-4">
+        <div>
+          <div class="date-day">23</div>
+          <div class="date-month mt-1">mai</div>
+          <div class="date-weekday mt-0.5">sex</div>
+        </div>
+
+        <div class="flex items-center gap-6 lg:gap-8">
+          <div>
+            <div class="stat-label">CPA</div>
+            <div class="stat-value-big text-[var(--warn)] mt-1.5">R$ 44,15</div>
+          </div>
+          <div>
+            <div class="stat-label">Compras</div>
+            <div class="stat-value-big mt-1.5">2</div>
+          </div>
+          <div>
+            <div class="stat-label">Gasto</div>
+            <div class="stat-value-big mt-1.5">R$ 88,29</div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1 mini-funnel">
+          <div class="mini-stage" data-label="IMPR" style="--stage-bg: var(--stage-impr);">
+            <span>2.339</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="CLIQUES" style="--stage-bg: var(--stage-click);">
+            <span>87</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="PAGEVIEWS" style="--stage-bg: var(--stage-pv);">
+            <span>62</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="CHECKOUT" style="--stage-bg: var(--stage-chkt);">
+            <span>7</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="COMPRAS" style="--stage-bg: var(--stage-buy);">
+            <span>2</span>
+          </div>
+        </div>
+
+        <div class="text-right">
+          <div class="tag" style="background: rgba(251, 191, 36, 0.18); color: var(--warn);">⚠ baixo volume</div>
+          <div class="meta mt-2">CTR 3,72%</div>
+        </div>
+      </div>
+      <div class="h-0.5 bg-white/[0.03] relative">
+        <div style="width: 5%; height: 100%; background: var(--warn); opacity: 0.6;"></div>
+      </div>
+    </article>
+
+    <!-- Day 22 -->
+    <article class="card rounded-md">
+      <div class="relative grid grid-cols-[100px_auto_1fr_auto] items-center gap-4 px-5 py-4">
+        <div>
+          <div class="date-day">22</div>
+          <div class="date-month mt-1">mai</div>
+          <div class="date-weekday mt-0.5">qui</div>
+        </div>
+
+        <div class="flex items-center gap-6 lg:gap-8">
+          <div>
+            <div class="stat-label">CPA</div>
+            <div class="stat-value-big mt-1.5">R$ 91,60</div>
+          </div>
+          <div>
+            <div class="stat-label">Compras</div>
+            <div class="stat-value-big mt-1.5">1</div>
+          </div>
+          <div>
+            <div class="stat-label">Gasto</div>
+            <div class="stat-value-big mt-1.5">R$ 91,60</div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1 mini-funnel">
+          <div class="mini-stage" data-label="IMPR" style="--stage-bg: var(--stage-impr);">
+            <span>2.141</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="CLIQUES" style="--stage-bg: var(--stage-click);">
+            <span>80</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="PAGEVIEWS" style="--stage-bg: var(--stage-pv);">
+            <span>53</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="CHECKOUT" style="--stage-bg: var(--stage-chkt);">
+            <span>6</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="COMPRAS" style="--stage-bg: var(--stage-buy);">
+            <span>1</span>
+          </div>
+        </div>
+
+        <div class="text-right">
+          <div class="meta">CTR 3,74%</div>
+          <div class="meta mt-1">Conn 66,3%</div>
+        </div>
+      </div>
+      <div class="h-0.5 bg-white/[0.03] relative">
+        <div style="width: 5%; height: 100%; background: var(--text-muted); opacity: 0.4;"></div>
+      </div>
+    </article>
+
+    <!-- Weekend Day -->
+    <article class="card rounded-md is-weekend">
+      <div class="relative grid grid-cols-[100px_auto_1fr_auto] items-center gap-4 px-5 py-4">
+        <div>
+          <div class="date-day">21</div>
+          <div class="date-month mt-1">mai</div>
+          <div class="date-weekday mt-0.5">qua</div>
+        </div>
+
+        <div class="flex items-center gap-6 lg:gap-8">
+          <div>
+            <div class="stat-label">CPA</div>
+            <div class="stat-value-big mt-1.5">R$ 89,36</div>
+          </div>
+          <div>
+            <div class="stat-label">Compras</div>
+            <div class="stat-value-big mt-1.5">1</div>
+          </div>
+          <div>
+            <div class="stat-label">Gasto</div>
+            <div class="stat-value-big mt-1.5">R$ 89,36</div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1 mini-funnel">
+          <div class="mini-stage" data-label="IMPR" style="--stage-bg: var(--stage-impr);">
+            <span>2.033</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="CLIQUES" style="--stage-bg: var(--stage-click);">
+            <span>74</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="PAGEVIEWS" style="--stage-bg: var(--stage-pv);">
+            <span>55</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="CHECKOUT" style="--stage-bg: var(--stage-chkt);">
+            <span>5</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="COMPRAS" style="--stage-bg: var(--stage-buy);">
+            <span>1</span>
+          </div>
+        </div>
+
+        <div class="text-right">
+          <div class="meta">CTR 3,64%</div>
+          <div class="meta mt-1">Conn 74,3%</div>
+        </div>
+      </div>
+      <div class="h-0.5 bg-white/[0.03] relative">
+        <div style="width: 5%; height: 100%; background: var(--text-muted); opacity: 0.4;"></div>
+      </div>
+    </article>
+
+    <!-- DAY 0 PURCHASE - quiet -->
+    <article class="card rounded-md">
+      <div class="relative grid grid-cols-[100px_auto_1fr_auto] items-center gap-4 px-5 py-4">
+        <div>
+          <div class="date-day">20</div>
+          <div class="date-month mt-1">mai</div>
+          <div class="date-weekday mt-0.5">ter</div>
+        </div>
+
+        <div class="flex items-center gap-6 lg:gap-8">
+          <div>
+            <div class="stat-label">CPA</div>
+            <div class="stat-value-big text-[var(--text-faint)] mt-1.5">—</div>
+          </div>
+          <div>
+            <div class="stat-label">Compras</div>
+            <div class="stat-value-big text-[var(--text-faint)] mt-1.5">0</div>
+          </div>
+          <div>
+            <div class="stat-label">Gasto</div>
+            <div class="stat-value-big mt-1.5">R$ 148,02</div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1 mini-funnel">
+          <div class="mini-stage" data-label="IMPR" style="--stage-bg: var(--stage-impr);">
+            <span>3.441</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="CLIQUES" style="--stage-bg: var(--stage-click);">
+            <span>138</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="PAGEVIEWS" style="--stage-bg: var(--stage-pv);">
+            <span>93</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage" data-label="CHECKOUT" style="--stage-bg: var(--stage-chkt);">
+            <span>15</span>
+          </div>
+          <span class="mini-stage-divider">→</span>
+          <div class="mini-stage is-empty" data-label="COMPRAS" style="--stage-bg: var(--stage-buy);">
+            <span>0</span>
+          </div>
+        </div>
+
+        <div class="text-right">
+          <div class="meta">CTR 4,01%</div>
+          <div class="meta mt-1">Conn 67,4%</div>
+        </div>
+      </div>
+      <div class="h-0.5 bg-white/[0.03] relative">
+        <div style="width: 8%; height: 100%; background: var(--text-muted); opacity: 0.4;"></div>
+      </div>
+    </article>
+
+  </section>
+
+  <!-- Totals strip -->
+  <section class="mt-6 card rounded-md p-5">
+    <div class="grid grid-cols-2 md:grid-cols-6 gap-6">
+      <div>
+        <div class="stat-label">Dias com compra</div>
+        <div class="mono font-medium tabular text-xl mt-1.5" style="letter-spacing: -0.03em;">5 / 10</div>
+      </div>
+      <div>
+        <div class="stat-label">Total Compras</div>
+        <div class="mono font-medium tabular text-xl mt-1.5" style="letter-spacing: -0.03em;">10</div>
+      </div>
+      <div>
+        <div class="stat-label">CPA Médio</div>
+        <div class="mono font-medium tabular text-xl mt-1.5" style="letter-spacing: -0.03em;">R$ 174,53</div>
+      </div>
+      <div>
+        <div class="stat-label">Gasto Total</div>
+        <div class="mono font-medium tabular text-xl mt-1.5" style="letter-spacing: -0.03em;">R$ 1.745</div>
+      </div>
+      <div>
+        <div class="stat-label">CTR Médio</div>
+        <div class="mono font-medium tabular text-xl mt-1.5" style="letter-spacing: -0.03em;">3,62%</div>
+      </div>
+      <div>
+        <div class="stat-label">CHKT → 💰</div>
+        <div class="mono font-medium tabular text-xl mt-1.5" style="letter-spacing: -0.03em;">12,7%</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mt-10 pt-5 border-t border-[var(--border)]">
+    <p class="meta">v1 · diário com 4 sparkline trends no topo + row por dia com mini-funnel inline</p>
+  </footer>
+
+</main>
+
+</body>
+</html>
