@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Check, X, Minus } from "lucide-react";
+import { Check, X, Minus, Mail } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { fmt } from "./format";
 import { BuyerDrawer } from "./buyer-drawer";
@@ -55,7 +55,7 @@ export function BuyersTable({ buyers, showInGroup = false }: Props) {
           <TableRow>
             <TableHead>Data</TableHead>
             <TableHead>Nome</TableHead>
-            <TableHead>Telefone</TableHead>
+            <TableHead>Contato</TableHead>
             <TableHead className="text-right">Valor</TableHead>
             {showInGroup && <TableHead className="text-center">No grupo</TableHead>}
           </TableRow>
@@ -83,6 +83,16 @@ export function BuyersTable({ buyers, showInGroup = false }: Props) {
                     >
                       {formatPhone(b.buyerPhoneE164)}
                     </Link>
+                  ) : b.buyerEmail ? (
+                    <a
+                      href={`mailto:${b.buyerEmail}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors text-sm"
+                      title="Hotmart não enviou telefone — usando email"
+                    >
+                      <Mail className="h-3 w-3" />
+                      <span className="truncate max-w-[200px]">{b.buyerEmail}</span>
+                    </a>
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}

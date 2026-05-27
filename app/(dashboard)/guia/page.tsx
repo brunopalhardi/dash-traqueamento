@@ -13,8 +13,10 @@ import {
   getDailyPurchaseSeries,
 } from "@/lib/queries/purchases";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ActiveToggle } from "@/components/dashboard/active-toggle";
 import { BuyersTable } from "@/components/dashboard/buyers-table";
 import { ComparisonToggle } from "@/components/dashboard/comparison-toggle";
+import { FunnelHighlights, highlightsByCpa } from "@/components/dashboard/funnel-highlights";
 import { DailyBarChart, type DailyBarPoint } from "@/components/dashboard/daily-bar-chart";
 import { fmt } from "@/components/dashboard/format";
 import { KpiCard } from "@/components/dashboard/kpi-card";
@@ -73,11 +75,12 @@ function deltaOf(curr: number, prev: number): { label: string; positive: boolean
 export default async function GuiaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ preset?: string; cycle?: string; start?: string; end?: string; compare?: string }>;
+  searchParams: Promise<{ preset?: string; cycle?: string; start?: string; end?: string; compare?: string; active?: string }>;
 }) {
   const sp = await searchParams;
   const { range: currentRange, label: rangeLabel } = parseRangeFromSearchParams(sp);
   const compare = sp.compare === "1";
+  const onlyActive = sp.active === "1";
   const prevRange = rangePreviousCycle(currentRange);
 
   const [
@@ -99,10 +102,10 @@ export default async function GuiaPage({
     compare ? getDailyPurchaseSeries("guia", prevRange) : Promise.resolve([]),
     compare ? getDailySeries("guia", prevRange) : Promise.resolve([]),
     getBuyersForCycle("guia", currentRange),
-    getDailyFunnel("guia", currentRange),
-    getCampaignFunnel("guia", currentRange),
-    getCreativeFunnel("guia", currentRange, 50),
-    getPageFunnel("guia", currentRange),
+    getDailyFunnel("guia", currentRange, { onlyActive }),
+    getCampaignFunnel("guia", currentRange, { onlyActive }),
+    getCreativeFunnel("guia", currentRange, 50, { onlyActive }),
+    getPageFunnel("guia", currentRange, { onlyActive }),
   ]);
 
   const currentDaily = buildDailyPoints(currentRange, dailyHot, dailyMeta);
@@ -125,7 +128,8 @@ export default async function GuiaPage({
         subtitle={subtitle}
         hidePicker
         right={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <ActiveToggle />
             <ComparisonToggle />
             <PeriodSelector />
           </div>
@@ -220,6 +224,15 @@ export default async function GuiaPage({
           </CardTitle>
         </CardHeader>
         <CardContent>
+          <FunnelHighlights
+            items={highlightsByCpa(
+              dailyFunnel.map((d) => ({
+                label: fmt.shortDate(d.date),
+                spend: d.spend,
+                purchase: d.purchase,
+              })),
+            )}
+          />
           <FunnelTableDaily rows={dailyFunnel} />
         </CardContent>
       </Card>
@@ -231,6 +244,15 @@ export default async function GuiaPage({
           </CardTitle>
         </CardHeader>
         <CardContent>
+          <FunnelHighlights
+            items={highlightsByCpa(
+              campaignFunnel.map((c) => ({
+                label: c.campaignName,
+                spend: c.spend,
+                purchase: c.purchase,
+              })),
+            )}
+          />
           <FunnelTableCampaign rows={campaignFunnel} />
         </CardContent>
       </Card>
@@ -242,6 +264,15 @@ export default async function GuiaPage({
           </CardTitle>
         </CardHeader>
         <CardContent>
+          <FunnelHighlights
+            items={highlightsByCpa(
+              creativeFunnel.map((c) => ({
+                label: c.adName,
+                spend: c.spend,
+                purchase: c.purchase,
+              })),
+            )}
+          />
           <FunnelTableCreative rows={creativeFunnel} basePath="/guia/criativo" />
         </CardContent>
       </Card>
@@ -253,6 +284,15 @@ export default async function GuiaPage({
           </CardTitle>
         </CardHeader>
         <CardContent>
+          <FunnelHighlights
+            items={highlightsByCpa(
+              pageFunnel.map((p) => ({
+                label: p.landingUrl ?? "Sem URL",
+                spend: p.spend,
+                purchase: p.purchase,
+              })),
+            )}
+          />
           <FunnelTablePage rows={pageFunnel} />
         </CardContent>
       </Card>
