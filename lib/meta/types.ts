@@ -54,6 +54,43 @@ export interface MetaAd {
   preview_shareable_link?: string;
 }
 
+export interface MetaLinkData {
+  link?: string;
+  message?: string;
+  name?: string;
+  description?: string;
+}
+
+export interface MetaVideoCTAValue {
+  link?: string;
+  link_format?: string;
+}
+
+export interface MetaVideoCTA {
+  type?: string;
+  value?: MetaVideoCTAValue;
+}
+
+export interface MetaVideoData {
+  call_to_action?: MetaVideoCTA;
+  video_id?: string;
+}
+
+export interface MetaObjectStorySpec {
+  page_id?: string;
+  link_data?: MetaLinkData;
+  video_data?: MetaVideoData;
+}
+
+export interface MetaAssetFeedLinkUrl {
+  website_url?: string;
+  display_url?: string;
+}
+
+export interface MetaAssetFeedSpec {
+  link_urls?: MetaAssetFeedLinkUrl[];
+}
+
 export interface MetaCreative {
   id: string;
   name?: string;
@@ -65,6 +102,8 @@ export interface MetaCreative {
   title?: string;
   body?: string;
   call_to_action_type?: string;
+  object_story_spec?: MetaObjectStorySpec;
+  asset_feed_spec?: MetaAssetFeedSpec;
 }
 
 export interface MetaInsightAction {
