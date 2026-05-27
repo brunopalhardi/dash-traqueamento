@@ -31,6 +31,13 @@ export const fmt = {
       minimumFractionDigits: fractionDigits,
     }) + "%";
   },
+  pct1(v: number): string {
+    if (!isFinite(v)) return "—";
+    return v.toLocaleString("pt-BR", {
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 2,
+    }) + "%";
+  },
   ratio(v: number, fractionDigits = 2): string {
     if (!isFinite(v) || v === 0) return "—";
     return v.toLocaleString("pt-BR", {
@@ -55,3 +62,21 @@ export const fmt = {
     return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
   },
 };
+
+/**
+ * Severidade visual do CPA em relação ao spend do período:
+ *  - good   → CPA < spend/3
+ *  - neutral → spend/3 ≤ CPA < spend/2
+ *  - bad    → CPA ≥ spend/2
+ *  - none   → sem compras ou sem gasto (não dá pra avaliar)
+ */
+export type CpaTone = "good" | "neutral" | "bad" | "none";
+
+export function cpaTone(cpa: number, spend: number): CpaTone {
+  if (!isFinite(cpa) || cpa === 0 || spend === 0) return "none";
+  const low = spend / 3;
+  const high = spend / 2;
+  if (cpa < low) return "good";
+  if (cpa < high) return "neutral";
+  return "bad";
+}
