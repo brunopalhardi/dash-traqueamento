@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { ChevronRight, RefreshCw, LogOut } from "lucide-react";
+import { RefreshCw, LogOut, Home } from "lucide-react";
 import { toast } from "sonner";
 import { signOut } from "@/app/login/actions";
 import { cn } from "@/lib/utils";
@@ -14,11 +14,12 @@ const LABELS: Record<string, string> = {
   guia: "Guia",
   settings: "Configurações",
   integrations: "Integrações",
+  criativo: "Criativo",
 };
 
 interface Crumb {
   label: string;
-  href: string | null; // null = não-clicável (último ou segmento desconhecido)
+  href: string | null;
 }
 
 function breadcrumbsFrom(pathname: string): Crumb[] {
@@ -28,20 +29,21 @@ function breadcrumbsFrom(pathname: string): Crumb[] {
     const isLast = i === segs.length - 1;
     const known = s in LABELS;
     const label = LABELS[s] ?? s.replace(/-/g, " ");
-    // só liga em segmentos conhecidos que tenham rota real (evita "criativo"
-    // virar link pra /desafio/criativo, que não existe)
     const href = known && !isLast ? "/" + segs.slice(0, i + 1).join("/") : null;
     return { label, href };
   });
 }
 
+function hashHue(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) & 0xffffffff;
+  return Math.abs(h) % 360;
+}
+
 export function Topbar({ userEmail }: { userEmail: string }) {
   const pathname = usePathname();
   const router = useRouter();
-  const crumbs: Crumb[] = [
-    { label: "OBA - Tráfego", href: pathname === "/" ? null : "/" },
-    ...breadcrumbsFrom(pathname),
-  ];
+  const crumbs: Crumb[] = breadcrumbsFrom(pathname);
   const [syncing, setSyncing] = useState(false);
 
   async function handleSync() {
@@ -71,63 +73,88 @@ export function Topbar({ userEmail }: { userEmail: string }) {
     }
   }
 
-  const initial = userEmail.charAt(0).toUpperCase();
+  const initial = (userEmail.charAt(0) || "?").toUpperCase();
+  const hue = hashHue(userEmail);
+  const avatarBg = `linear-gradient(135deg, hsl(${hue}, 55%, 50%) 0%, hsl(${(hue + 20) % 360}, 60%, 38%) 100%)`;
 
   return (
     <header className="h-14 border-b border-border flex items-center justify-between px-6 bg-background sticky top-0 z-10">
-      <nav className="flex items-center gap-2 text-sm">
+      {/* Breadcrumbs */}
+      <nav className="flex items-center gap-1.5">
+        <Link
+          href="/"
+          className="inline-flex items-center justify-center h-6 w-6 rounded text-muted-foreground/60 hover:text-foreground transition-colors"
+          title="Início"
+        >
+          <Home className="h-3 w-3" />
+        </Link>
         {crumbs.map((c, i) => {
           const isLast = i === crumbs.length - 1;
-          const baseCls = isLast
-            ? "text-foreground font-medium"
-            : "text-muted-foreground";
           return (
-            <span key={i} className="flex items-center gap-2">
+            <span key={i} className="flex items-center gap-1.5">
+              <span className="font-mono text-[10px] text-muted-foreground/40">/</span>
               {c.href ? (
                 <Link
                   href={c.href}
-                  className={cn(baseCls, "hover:text-foreground transition-colors")}
+                  className="font-mono text-[11px] text-muted-foreground hover:text-foreground transition-colors lowercase tracking-wide"
                 >
                   {c.label}
                 </Link>
               ) : (
-                <span className={baseCls}>{c.label}</span>
+                <span
+                  className={cn(
+                    "font-mono text-[11px] tracking-wide",
+                    isLast
+                      ? "text-foreground font-medium lowercase"
+                      : "text-muted-foreground lowercase",
+                  )}
+                >
+                  {c.label}
+                </span>
               )}
-              {!isLast ? (
-                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
-              ) : null}
             </span>
           );
         })}
       </nav>
 
+      {/* Right actions */}
       <div className="flex items-center gap-2">
+        {/* Sync button */}
         <button
           onClick={handleSync}
           disabled={syncing}
           className={cn(
-            "inline-flex items-center gap-2 h-8 px-3 rounded-md text-xs font-medium transition-colors",
-            "bg-primary/15 text-primary hover:bg-primary/25 disabled:opacity-60",
+            "inline-flex items-center gap-2 h-8 px-3 rounded-md font-mono text-[11px] tracking-wide font-medium transition-colors lowercase",
+            "border border-border bg-card text-foreground disabled:opacity-50",
+            "hover:bg-white/[0.04] hover:border-white/15",
           )}
+          title="Sincronizar Meta agora (manual)"
         >
-          <RefreshCw className={cn("h-3.5 w-3.5", syncing && "animate-spin")} />
-          {syncing ? "Sincronizando…" : "Sincronizar"}
+          <RefreshCw className={cn("h-3 w-3", syncing && "animate-spin")} />
+          {syncing ? "sincronizando…" : "sincronizar"}
         </button>
 
-        <div className="inline-flex items-center gap-2 h-8 px-2 pr-3 rounded-md bg-card border border-border/60">
-          <div className="h-6 w-6 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-[11px] font-semibold text-primary">
+        {/* User pill */}
+        <div className="inline-flex items-center gap-2 h-8 pl-1 pr-3 rounded-md border border-border bg-card">
+          <div
+            className="h-6 w-6 rounded-full flex items-center justify-center font-mono text-[10px] font-semibold text-white border border-white/10"
+            style={{ background: avatarBg }}
+          >
             {initial}
           </div>
-          <span className="text-xs text-muted-foreground hidden sm:inline">{userEmail}</span>
+          <span className="font-mono text-[11px] text-muted-foreground hidden sm:inline tabular-nums">
+            {userEmail}
+          </span>
         </div>
 
+        {/* Logout */}
         <form action={signOut}>
           <button
             type="submit"
             title="Sair"
-            className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-transparent hover:border-border text-muted-foreground hover:text-foreground hover:bg-card transition-colors"
           >
-            <LogOut className="h-3.5 w-3.5" />
+            <LogOut className="h-3 w-3" />
           </button>
         </form>
       </div>

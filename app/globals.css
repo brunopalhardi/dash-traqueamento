@@ -26,6 +26,7 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-border-hi: var(--border-hi);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -65,6 +66,7 @@
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
+  --border-hi: oklch(0.85 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.87 0 0);
@@ -84,7 +86,9 @@
 }
 
 .dark {
-  /* Inspirado no CliniFunnel: preto-zinc + accent âmbar/dourado + verde positivo */
+  /* Idioma visual operator's tool (2026-05-28): dark zinc neutro, accents
+   * tonais (emerald/rose/amber) usados como sinais de saúde — não como
+   * branding. Primary continua âmbar pra compat com elementos legados. */
   --background: oklch(0.16 0.005 60);
   --foreground: oklch(0.97 0.005 60);
   --card: oklch(0.21 0.006 60);
@@ -101,6 +105,7 @@
   --accent-foreground: oklch(0.97 0.005 60);
   --destructive: oklch(0.7 0.22 22);
   --border: oklch(1 0 0 / 7%);
+  --border-hi: oklch(1 0 0 / 14%);
   --input: oklch(1 0 0 / 10%);
   --ring: oklch(0.83 0.16 80);
   /* Chart palette: gold, emerald, sky, coral, lavender */
