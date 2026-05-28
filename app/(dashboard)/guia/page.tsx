@@ -1,8 +1,6 @@
-// Ícones mantidos por enquanto pra retrocompat de outras chamadas. Layout novo não usa.
 import {
   getDailySeries,
   getKpis,
-  getTopAds,
   rangePreviousCycle,
 } from "@/lib/queries/dashboard";
 import { parseRangeFromSearchParams } from "@/lib/utils/date-ranges";
@@ -22,7 +20,6 @@ import { fmt } from "@/components/dashboard/format";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { PeriodSelector } from "@/components/dashboard/period-selector";
-import { TopCreativesGrid } from "@/components/dashboard/top-creatives-grid";
 import { FunnelTableDaily } from "@/components/dashboard/funnel-table-daily";
 import { FunnelTableCampaign } from "@/components/dashboard/funnel-table-campaign";
 import { FunnelTableCreative } from "@/components/dashboard/funnel-table-creative";
@@ -84,14 +81,13 @@ export default async function GuiaPage({
   const prevRange = rangePreviousCycle(currentRange);
 
   const [
-    kpis, adsTbl,
+    kpis,
     purchaseCount, revenueHot, dailyHot, dailyMeta,
     prevKpis, prevPurchaseCount, prevRevenueHot, prevDailyHot, prevDailyMeta,
     buyers,
     dailyFunnel, campaignFunnel, creativeFunnel, pageFunnel,
   ] = await Promise.all([
     getKpis("guia", currentRange),
-    getTopAds("guia", currentRange, { limit: 5, orderBy: "spend" }),
     getApprovedPurchaseCount("guia", currentRange),
     getApprovedPurchaseRevenue("guia", currentRange),
     getDailyPurchaseSeries("guia", currentRange),
@@ -124,6 +120,7 @@ export default async function GuiaPage({
   return (
     <>
       <PageHeader
+        eyebrow="guia · perpétuo"
         title="Guia"
         subtitle={subtitle}
         hidePicker
@@ -182,17 +179,6 @@ export default async function GuiaPage({
         </CardHeader>
         <CardContent>
           <DailyBarChart current={currentDaily} previous={prevDaily} />
-        </CardContent>
-      </Card>
-
-      <Card className="bg-card border-border/60 mb-6">
-        <CardHeader>
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Top criativos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <TopCreativesGrid ads={adsTbl} limit={5} basePath="/guia/criativo" />
         </CardContent>
       </Card>
 
