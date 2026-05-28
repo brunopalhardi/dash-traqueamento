@@ -37,11 +37,16 @@ export function ComboChart({ data, xKey, series, height = 280 }: ComboChartProps
   return (
     <ResponsiveContainer width="100%" height={height}>
       <ComposedChart data={data} margin={{ top: 8, right: usesRight ? 12 : 8, left: 8, bottom: 8 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+        <CartesianGrid
+          strokeDasharray="2 4"
+          stroke="rgba(255,255,255,0.04)"
+          vertical={false}
+        />
         <XAxis
           dataKey={xKey}
-          stroke="rgba(255,255,255,0.4)"
-          fontSize={11}
+          stroke="rgba(255,255,255,0.5)"
+          fontSize={10}
+          fontFamily="var(--font-mono)"
           tickLine={false}
           axisLine={false}
           tickFormatter={(v) =>
@@ -50,19 +55,26 @@ export function ComboChart({ data, xKey, series, height = 280 }: ComboChartProps
         />
         <YAxis
           yAxisId="left"
-          stroke="rgba(255,255,255,0.4)"
-          fontSize={11}
+          stroke="rgba(255,255,255,0.5)"
+          fontSize={10}
+          fontFamily="var(--font-mono)"
           tickLine={false}
           axisLine={false}
-          tickFormatter={(v) => fmtVal(v as number, series.find((s) => (s.yAxisId ?? "left") === "left")?.format)}
+          tickFormatter={(v) =>
+            fmtVal(
+              v as number,
+              series.find((s) => (s.yAxisId ?? "left") === "left")?.format,
+            )
+          }
           width={56}
         />
         {usesRight ? (
           <YAxis
             yAxisId="right"
             orientation="right"
-            stroke="rgba(255,255,255,0.4)"
-            fontSize={11}
+            stroke="rgba(255,255,255,0.5)"
+            fontSize={10}
+            fontFamily="var(--font-mono)"
             tickLine={false}
             axisLine={false}
             tickFormatter={(v) => fmtVal(v as number, series.find((s) => s.yAxisId === "right")?.format)}
@@ -70,12 +82,19 @@ export function ComboChart({ data, xKey, series, height = 280 }: ComboChartProps
           />
         ) : null}
         <Tooltip
+          cursor={{ fill: "rgba(255,255,255,0.04)" }}
           contentStyle={{
-            background: "oklch(0.21 0.006 60)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: 8,
+            background: "var(--color-card)",
+            border: "1px solid var(--color-border)",
+            borderRadius: 6,
             fontSize: 12,
+            fontFamily: "var(--font-mono)",
           }}
+          labelStyle={{
+            color: "var(--color-foreground)",
+            fontFamily: "var(--font-mono)",
+          }}
+          itemStyle={{ color: "var(--color-foreground)" }}
           labelFormatter={(v) =>
             typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? fmt.shortDate(v) : v
           }
@@ -86,8 +105,14 @@ export function ComboChart({ data, xKey, series, height = 280 }: ComboChartProps
           }}
         />
         <Legend
-          iconType="circle"
-          wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
+          iconType="square"
+          wrapperStyle={{
+            fontSize: 10,
+            paddingTop: 12,
+            fontFamily: "var(--font-mono)",
+            textTransform: "lowercase",
+            letterSpacing: "0.04em",
+          }}
           formatter={(value) => series.find((s) => s.key === value)?.label ?? value}
         />
         {series.map((s) =>
@@ -97,8 +122,8 @@ export function ComboChart({ data, xKey, series, height = 280 }: ComboChartProps
               yAxisId={s.yAxisId ?? "left"}
               dataKey={s.key}
               fill={s.color}
-              radius={[4, 4, 0, 0]}
-              maxBarSize={28}
+              radius={[3, 3, 0, 0]}
+              maxBarSize={32}
             />
           ) : (
             <Line
@@ -107,8 +132,8 @@ export function ComboChart({ data, xKey, series, height = 280 }: ComboChartProps
               type="monotone"
               dataKey={s.key}
               stroke={s.color}
-              strokeWidth={2.5}
-              dot={false}
+              strokeWidth={2}
+              dot={{ r: 3, fill: s.color, strokeWidth: 0 }}
               activeDot={{ r: 4 }}
             />
           ),

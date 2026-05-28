@@ -1,4 +1,4 @@
-import { DollarSign, TrendingUp, Target, Users2, Wallet } from "lucide-react";
+import Link from "next/link";
 import {
   getDailySeries,
   getKpis,
@@ -6,17 +6,62 @@ import {
   rangeLastDays,
   rangePreviousPeriod,
 } from "@/lib/queries/dashboard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ComboChart } from "@/components/dashboard/combo-chart";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { fmt } from "@/components/dashboard/format";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PageHeader } from "@/components/dashboard/page-header";
+import type { ProductSlug } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
 
 const DEFAULT_DAYS = 7;
+
+// Visual identity por produto na home
+const PRODUCT_VISUAL: Record<
+  ProductSlug | "outros",
+  { rail: string; tagBg: string; tagText: string; tagLabel: string; href: string | null }
+> = {
+  geral: {
+    rail: "bg-muted-foreground/30",
+    tagBg: "bg-muted",
+    tagText: "text-muted-foreground",
+    tagLabel: "GERAL",
+    href: null,
+  },
+  desafio: {
+    rail: "bg-pink-500",
+    tagBg: "bg-pink-500/15",
+    tagText: "text-pink-300",
+    tagLabel: "SEMANAL · DESATIVADO",
+    href: "/desafio",
+  },
+  guia: {
+    rail: "bg-purple-500",
+    tagBg: "bg-purple-500/15",
+    tagText: "text-purple-300",
+    tagLabel: "PERPÉTUO",
+    href: "/guia",
+  },
+  outros: {
+    rail: "bg-muted-foreground/30",
+    tagBg: "bg-muted",
+    tagText: "text-muted-foreground",
+    tagLabel: "OUTROS",
+    href: null,
+  },
+};
+
+const PRODUCT_DESC: Record<ProductSlug | "outros", string> = {
+  geral: "consolidado",
+  desafio: "vendas do desafio semanal · ciclo seg→dom",
+  guia: "produto perpétuo · ticket maior",
+  outros: "campanhas não categorizadas",
+};
+
+function deltaFromKpis(curr: number, prev: number) {
+  return fmt.delta(curr, prev);
+}
 
 export default async function GeralPage({
   searchParams,
@@ -36,12 +81,14 @@ export default async function GeralPage({
   ]);
 
   const hasData = daily.length > 0;
+  const maxProductSpend = Math.max(...breakdown.map((b) => b.spend), 1);
 
   return (
     <>
       <PageHeader
+        eyebrow="geral · consolidado"
         title="Visão Geral"
-        subtitle="Investimento e ROAS consolidados de todos os produtos"
+        subtitle={`últimos ${days} dias · investimento e ROAS consolidados de todos os produtos`}
         rangeDays={DEFAULT_DAYS}
       />
 
@@ -49,115 +96,206 @@ export default async function GeralPage({
         <KpiCard
           label="Investimento"
           value={fmt.money(kpis.spend)}
-          delta={fmt.delta(kpis.spend, prevKpis.spend)}
+          delta={deltaFromKpis(kpis.spend, prevKpis.spend)}
           invertDelta
-          icon={Wallet}
         />
         <KpiCard
           label="Receita (Pixel)"
           value={fmt.money(kpis.revenue)}
-          delta={fmt.delta(kpis.revenue, prevKpis.revenue)}
-          icon={DollarSign}
+          delta={deltaFromKpis(kpis.revenue, prevKpis.revenue)}
         />
         <KpiCard
           label="ROAS"
           value={fmt.ratio(kpis.roas)}
-          delta={fmt.delta(kpis.roas, prevKpis.roas)}
+          delta={deltaFromKpis(kpis.roas, prevKpis.roas)}
           hint={`vs ${fmt.ratio(prevKpis.roas)} anterior`}
-          icon={TrendingUp}
+          tone={
+            kpis.roas >= 2
+              ? "good"
+              : kpis.roas >= 1
+                ? "warn"
+                : kpis.roas > 0
+                  ? "bad"
+                  : "neutral"
+          }
         />
         <KpiCard
           label="Leads"
           value={fmt.int(kpis.leads)}
-          delta={fmt.delta(kpis.leads, prevKpis.leads)}
-          icon={Users2}
+          delta={deltaFromKpis(kpis.leads, prevKpis.leads)}
         />
         <KpiCard
           label="CPL médio"
           value={fmt.money(kpis.cpl)}
-          delta={fmt.delta(kpis.cpl, prevKpis.cpl)}
+          delta={deltaFromKpis(kpis.cpl, prevKpis.cpl)}
           invertDelta
-          icon={Target}
         />
       </section>
 
-      <Card className="bg-card/60 border-border/60 mb-6">
-        <CardHeader>
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Investimento × Receita por dia
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {hasData ? (
-            <ComboChart
-              data={daily}
-              xKey="date"
-              series={[
-                {
-                  key: "spend",
-                  label: "Investimento",
-                  type: "bar",
-                  color: "var(--color-chart-1)",
-                  format: "money",
-                },
-                {
-                  key: "revenue",
-                  label: "Receita",
-                  type: "line",
-                  color: "var(--color-chart-3)",
-                  format: "money",
-                },
-              ]}
+      <div className="rounded-md border border-border bg-card p-6 mb-6">
+        <div className="flex items-start justify-between gap-6 mb-6 flex-wrap">
+          <div className="flex items-center gap-6 sm:gap-8 flex-wrap">
+            <Stat label="Investimento total" value={fmt.money(kpis.spend)} />
+            <Stat
+              label="Receita total"
+              value={fmt.money(kpis.revenue)}
+              tone={kpis.revenue >= kpis.spend ? "good" : "bad"}
             />
-          ) : (
-            <EmptyState />
-          )}
-        </CardContent>
-      </Card>
+            <Stat label="ROAS médio" value={fmt.ratio(kpis.roas)} />
+          </div>
+          <div className="font-mono text-[10px] tracking-wide text-muted-foreground/60 lowercase">
+            investimento × receita / dia
+          </div>
+        </div>
 
-      <Card className="bg-card/60 border-border/60">
-        <CardHeader>
-          <CardTitle className="text-sm font-medium text-muted-foreground">Por produto</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {breakdown.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">
-              Nenhum gasto detectado por produto no período.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Produto</TableHead>
-                  <TableHead className="text-right">Investido</TableHead>
-                  <TableHead className="text-right">Leads</TableHead>
-                  <TableHead className="text-right">Vendas</TableHead>
-                  <TableHead className="text-right">Receita</TableHead>
-                  <TableHead className="text-right">ROAS</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {breakdown.map((r) => (
-                  <TableRow key={r.productSlug}>
-                    <TableCell className="font-medium">{r.label}</TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {fmt.money(r.spend)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">{fmt.int(r.leads)}</TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {fmt.int(r.purchases)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {fmt.money(r.revenue)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">{fmt.ratio(r.roas)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+        {hasData ? (
+          <ComboChart
+            data={daily}
+            xKey="date"
+            series={[
+              {
+                key: "spend",
+                label: "investimento",
+                type: "bar",
+                color: "#6366f1",
+                format: "money",
+              },
+              {
+                key: "revenue",
+                label: "receita",
+                type: "line",
+                color: "#34d399",
+                format: "money",
+              },
+            ]}
+          />
+        ) : (
+          <EmptyState />
+        )}
+      </div>
+
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <div>
+          <div className="font-mono text-[10px] tracking-wide text-muted-foreground/60 lowercase mb-1">
+            por produto
+          </div>
+          <h2 className="text-lg font-medium tracking-tight">Breakdown do consolidado</h2>
+        </div>
+      </div>
+
+      {breakdown.length === 0 ? (
+        <p className="text-sm text-muted-foreground py-6 text-center">
+          Nenhum gasto detectado por produto no período.
+        </p>
+      ) : (
+        <section className="space-y-3">
+          {breakdown.map((p) => {
+            const slug = p.productSlug;
+            const visual = PRODUCT_VISUAL[slug] ?? PRODUCT_VISUAL.outros;
+            const desc = PRODUCT_DESC[slug] ?? "";
+            const spendPct = Math.min(100, (p.spend / maxProductSpend) * 100);
+            const roasTone =
+              p.roas >= 2
+                ? "text-emerald-400"
+                : p.roas >= 1
+                  ? "text-amber-400"
+                  : p.roas > 0
+                    ? "text-rose-400"
+                    : "text-muted-foreground";
+            const isDesafio = slug === "desafio";
+
+            const cardInner = (
+              <article
+                className={`relative rounded-md border border-border bg-card overflow-hidden transition-colors ${
+                  visual.href ? "hover:border-border-hi cursor-pointer" : ""
+                } ${isDesafio ? "opacity-70" : ""}`}
+              >
+                <div className={`absolute inset-y-0 left-0 w-[3px] ${visual.rail}`} />
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_auto_auto_auto] items-center gap-6 pl-5 pr-5 py-5">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span
+                        className={`font-mono text-[10px] tracking-[0.06em] font-medium px-1.5 py-0.5 rounded uppercase ${visual.tagBg} ${visual.tagText}`}
+                      >
+                        {visual.tagLabel}
+                      </span>
+                    </div>
+                    <h3 className="font-medium text-lg leading-tight tracking-tight">
+                      {p.label}
+                    </h3>
+                    <div className="font-mono text-[10px] tracking-wide text-muted-foreground/60 lowercase mt-1">
+                      {desc}
+                    </div>
+                  </div>
+                  <Stat label="Investido" value={fmt.money(p.spend)} />
+                  <Stat label="Vendas" value={fmt.int(p.purchases)} />
+                  <Stat label="Leads" value={fmt.int(p.leads)} />
+                  <Stat
+                    label="Receita"
+                    value={fmt.money(p.revenue)}
+                    tone={p.revenue > 0 ? "good" : undefined}
+                  />
+                  <Stat
+                    label="ROAS"
+                    value={fmt.ratio(p.roas)}
+                    valueClassName={roasTone}
+                  />
+                </div>
+                <div className="relative h-0.5 bg-muted/30">
+                  <div
+                    className={visual.rail}
+                    style={{
+                      width: `${spendPct}%`,
+                      height: "100%",
+                      opacity: 0.6,
+                    }}
+                  />
+                </div>
+              </article>
+            );
+
+            return visual.href ? (
+              <Link key={slug} href={visual.href} className="block">
+                {cardInner}
+              </Link>
+            ) : (
+              <div key={slug}>{cardInner}</div>
+            );
+          })}
+        </section>
+      )}
     </>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  tone,
+  valueClassName,
+}: {
+  label: string;
+  value: string;
+  tone?: "good" | "bad";
+  valueClassName?: string;
+}) {
+  const colorCls =
+    valueClassName ??
+    (tone === "good"
+      ? "text-emerald-400"
+      : tone === "bad"
+        ? "text-rose-400"
+        : "");
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground/70 font-medium">
+        {label}
+      </div>
+      <div
+        className={`font-mono font-medium tabular-nums text-[22px] leading-none tracking-tight mt-1.5 ${colorCls}`}
+      >
+        {value}
+      </div>
+    </div>
   );
 }

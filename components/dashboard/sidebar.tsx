@@ -2,19 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Calendar,
-  BookOpen,
-  Settings,
-  Sun,
-} from "lucide-react";
+import { LayoutDashboard, BookOpen, Settings, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VERSION, COMMIT_SHA } from "@/lib/version";
 
+// /desafio desativado da navegação em 2026-05-28 (Bruno focou em Guia).
+// Rota continua funcionando se acessada direto via URL.
 const items = [
   { href: "/", label: "Visão Geral", icon: LayoutDashboard },
-  { href: "/desafio", label: "Desafio", icon: Calendar },
   { href: "/guia", label: "Guia", icon: BookOpen },
 ];
 

@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup · Visão Geral · v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg: #09090b;
+    --bg-card: #141418;
+    --bg-card-hi: #1a1a1f;
+    --border: #232328;
+    --border-hi: #34343b;
+    --text: #fafafa;
+    --text-muted: #a1a1aa;
+    --text-faint: #52525b;
+    --winner: #34d399;
+    --loser: #f87171;
+    --warn: #fbbf24;
+  }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Geist', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.005em;
+  }
+  .mono { font-family: 'Geist Mono', monospace; font-feature-settings: 'tnum', 'zero'; }
+  .tabular { font-variant-numeric: tabular-nums; }
+  .meta {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: var(--text-faint);
+    text-transform: lowercase;
+  }
+  .rule {
+    height: 1px;
+    background: linear-gradient(90deg, var(--border) 0%, transparent 100%);
+  }
+
+  .kpi-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px 18px 22px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 180ms;
+  }
+  .kpi-card:hover { border-color: var(--border-hi); }
+  .accent-rail {
+    position: absolute;
+    top: 0; bottom: 0; left: 0;
+    width: 2px;
+  }
+
+  .kpi-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    opacity: 0.7;
+    font-weight: 500;
+  }
+  .kpi-value {
+    font-family: 'Geist Mono', monospace;
+    font-feature-settings: 'tnum';
+    font-weight: 500;
+    font-size: 30px;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    margin-top: 10px;
+  }
+  .kpi-delta {
+    font-family: 'Geist Mono', monospace;
+    font-feature-settings: 'tnum';
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    padding: 2px 5px;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .kpi-hint {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+    margin-top: 6px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-weight: 500;
+  }
+  .stat-value-mid {
+    font-family: 'Geist Mono', monospace;
+    font-feature-settings: 'tnum';
+    font-weight: 500;
+    font-size: 22px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  /* Product card row */
+  .product-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    transition: border-color 180ms;
+  }
+  .product-card:hover { border-color: var(--border-hi); }
+
+  /* Product accent on left */
+  .product-rail {
+    position: absolute;
+    top: 0; bottom: 0; left: 0;
+    width: 3px;
+  }
+
+  .tag {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+    padding: 3px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+
+  .perf-bar {
+    height: 2px;
+    background: rgba(255,255,255,0.04);
+    overflow: hidden;
+    border-radius: 999px;
+    margin-top: 14px;
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<main class="max-w-[1400px] mx-auto px-6 md:px-12 py-10">
+
+  <!-- Header -->
+  <header class="mb-6">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <div class="meta mb-2">geral · consolidado · 27 mai → 27 mai</div>
+        <h1 class="text-3xl md:text-4xl font-medium leading-tight tracking-tight">
+          Visão Geral
+        </h1>
+        <p class="mono text-xs text-[var(--text-muted)] mt-2 tabular">
+          últimos 7 dias · investimento e ROAS consolidados de todos os produtos
+        </p>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <button class="px-3 py-1.5 rounded-md border border-[var(--border)] bg-[var(--bg-card)] mono text-xs text-[var(--text-muted)]">
+          últimos 7 dias ▾
+        </button>
+      </div>
+    </div>
+    <div class="rule mt-5"></div>
+  </header>
+
+  <!-- 5 KPI cards -->
+  <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+    <div class="kpi-card">
+      <div class="accent-rail" style="background: var(--text-faint);"></div>
+      <div class="flex items-center justify-between">
+        <div class="kpi-label">Investimento</div>
+        <span class="kpi-delta" style="background: rgba(248, 113, 113, 0.12); color: var(--loser);">↑ 24%</span>
+      </div>
+      <div class="kpi-value">R$ 5.241</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="accent-rail" style="background: var(--winner);"></div>
+      <div class="flex items-center justify-between">
+        <div class="kpi-label">Receita (Pixel)</div>
+        <span class="kpi-delta" style="background: rgba(52, 211, 153, 0.12); color: var(--winner);">↑ 32%</span>
+      </div>
+      <div class="kpi-value">R$ 8.901</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="accent-rail" style="background: var(--warn);"></div>
+      <div class="flex items-center justify-between">
+        <div class="kpi-label">ROAS</div>
+        <span class="kpi-delta" style="background: rgba(52, 211, 153, 0.12); color: var(--winner);">↑ 6%</span>
+      </div>
+      <div class="kpi-value">1,70<span style="font-size: 18px; color: var(--text-muted);">x</span></div>
+      <div class="kpi-hint">vs 1,60 anterior</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="accent-rail" style="background: var(--winner);"></div>
+      <div class="flex items-center justify-between">
+        <div class="kpi-label">Leads</div>
+        <span class="kpi-delta" style="background: rgba(52, 211, 153, 0.12); color: var(--winner);">↑ 18%</span>
+      </div>
+      <div class="kpi-value">347</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="accent-rail" style="background: var(--winner);"></div>
+      <div class="flex items-center justify-between">
+        <div class="kpi-label">CPL Médio</div>
+        <span class="kpi-delta" style="background: rgba(52, 211, 153, 0.12); color: var(--winner);">↓ 9%</span>
+      </div>
+      <div class="kpi-value">R$ 15,10</div>
+    </div>
+  </section>
+
+  <!-- Chart: Investimento × Receita -->
+  <div class="kpi-card mb-6" style="padding: 24px; padding-left: 24px;">
+    <div class="flex items-start justify-between gap-6 mb-6 flex-wrap">
+      <div class="flex items-center gap-8">
+        <div>
+          <div class="stat-label">Investimento total</div>
+          <div class="stat-value-mid mt-1.5">R$ 5.241</div>
+        </div>
+        <div>
+          <div class="stat-label">Receita total</div>
+          <div class="stat-value-mid mt-1.5 text-[var(--winner)]">R$ 8.901</div>
+        </div>
+        <div>
+          <div class="stat-label">ROAS médio</div>
+          <div class="stat-value-mid mt-1.5">1,70x</div>
+        </div>
+      </div>
+      <div class="meta">investimento × receita / dia</div>
+    </div>
+
+    <!-- Static chart mockup -->
+    <div class="relative">
+      <svg viewBox="0 0 1000 220" preserveAspectRatio="none" class="w-full h-[220px]">
+        <line x1="50" x2="990" y1="30" y2="30" stroke="rgba(255,255,255,0.04)" stroke-dasharray="2 4"/>
+        <line x1="50" x2="990" y1="80" y2="80" stroke="rgba(255,255,255,0.04)" stroke-dasharray="2 4"/>
+        <line x1="50" x2="990" y1="130" y2="130" stroke="rgba(255,255,255,0.04)" stroke-dasharray="2 4"/>
+        <line x1="50" x2="990" y1="180" y2="180" stroke="rgba(255,255,255,0.04)" stroke-dasharray="2 4"/>
+
+        <!-- Spend bars (left side of each pair, indigo) -->
+        <rect x="80" y="100" width="40" height="80" fill="#6366f1" rx="3"/>
+        <rect x="200" y="80" width="40" height="100" fill="#6366f1" rx="3"/>
+        <rect x="320" y="60" width="40" height="120" fill="#6366f1" rx="3"/>
+        <rect x="440" y="90" width="40" height="90" fill="#6366f1" rx="3"/>
+        <rect x="560" y="70" width="40" height="110" fill="#6366f1" rx="3"/>
+        <rect x="680" y="50" width="40" height="130" fill="#6366f1" rx="3"/>
+        <rect x="800" y="40" width="40" height="140" fill="#6366f1" rx="3"/>
+
+        <!-- Revenue line (emerald) -->
+        <polyline
+          points="100,75 220,55 340,40 460,65 580,50 700,30 820,25"
+          fill="none" stroke="#34d399" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="100" cy="75" r="3" fill="#34d399"/>
+        <circle cx="220" cy="55" r="3" fill="#34d399"/>
+        <circle cx="340" cy="40" r="3" fill="#34d399"/>
+        <circle cx="460" cy="65" r="3" fill="#34d399"/>
+        <circle cx="580" cy="50" r="3" fill="#34d399"/>
+        <circle cx="700" cy="30" r="3" fill="#34d399"/>
+        <circle cx="820" cy="25" r="3" fill="#34d399"/>
+
+        <!-- X labels -->
+        <text x="100" y="205" text-anchor="middle" fill="var(--text-muted)" font-size="10" font-family="Geist Mono">21/mai</text>
+        <text x="220" y="205" text-anchor="middle" fill="var(--text-muted)" font-size="10" font-family="Geist Mono">22/mai</text>
+        <text x="340" y="205" text-anchor="middle" fill="var(--text-muted)" font-size="10" font-family="Geist Mono">23/mai</text>
+        <text x="460" y="205" text-anchor="middle" fill="var(--text-muted)" font-size="10" font-family="Geist Mono">24/mai</text>
+        <text x="580" y="205" text-anchor="middle" fill="var(--text-muted)" font-size="10" font-family="Geist Mono">25/mai</text>
+        <text x="700" y="205" text-anchor="middle" fill="var(--text-muted)" font-size="10" font-family="Geist Mono">26/mai</text>
+        <text x="820" y="205" text-anchor="middle" fill="var(--text-muted)" font-size="10" font-family="Geist Mono">27/mai</text>
+      </svg>
+    </div>
+
+    <div class="flex items-center gap-5 mt-4 flex-wrap">
+      <div class="flex items-center gap-1.5">
+        <span class="w-3 h-3 rounded-sm" style="background: #6366f1;"></span>
+        <span class="meta">investimento (barra)</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="w-3 h-0.5" style="background: #34d399;"></span>
+        <span class="meta">receita (linha)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Por produto — row cards -->
+  <p class="text-sm text-[var(--text-muted)] mb-3 mono">
+    <span class="text-[var(--text)] mr-2">Por produto</span>
+    breakdown do consolidado
+  </p>
+
+  <section class="space-y-3">
+
+    <!-- GUIA -->
+    <article class="product-card relative">
+      <div class="product-rail" style="background: #a855f7;"></div>
+      <div class="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-6 pl-3">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="tag" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">PERPÉTUO</span>
+          </div>
+          <h3 class="font-medium text-lg leading-tight tracking-tight">Guia</h3>
+          <div class="meta mt-1">produto perpétuo · ticket médio R$ 297</div>
+        </div>
+        <div>
+          <div class="stat-label">Investido</div>
+          <div class="stat-value-mid mt-1.5">R$ 1.745</div>
+        </div>
+        <div>
+          <div class="stat-label">Vendas</div>
+          <div class="stat-value-mid mt-1.5">10</div>
+        </div>
+        <div>
+          <div class="stat-label">Receita</div>
+          <div class="stat-value-mid mt-1.5 text-[var(--winner)]">R$ 2.970</div>
+        </div>
+        <div>
+          <div class="stat-label">ROAS</div>
+          <div class="stat-value-mid mt-1.5">1,70x</div>
+        </div>
+      </div>
+      <div class="perf-bar">
+        <div style="width: 33%; height: 100%; background: #a855f7; opacity: 0.6;"></div>
+      </div>
+    </article>
+
+    <!-- DESAFIO -->
+    <article class="product-card relative opacity-70">
+      <div class="product-rail" style="background: #ec4899;"></div>
+      <div class="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-6 pl-3">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="tag" style="background: rgba(236, 72, 153, 0.15); color: #f9a8d4;">SEMANAL</span>
+            <span class="tag" style="background: rgba(82, 82, 91, 0.25); color: var(--text-muted);">DESATIVADO</span>
+          </div>
+          <h3 class="font-medium text-lg leading-tight tracking-tight">Desafio</h3>
+          <div class="meta mt-1">vendas do desafio semanal (ciclo seg→dom) · ticket R$ 97</div>
+        </div>
+        <div>
+          <div class="stat-label">Investido</div>
+          <div class="stat-value-mid mt-1.5">R$ 3.496</div>
+        </div>
+        <div>
+          <div class="stat-label">Vendas</div>
+          <div class="stat-value-mid mt-1.5">42</div>
+        </div>
+        <div>
+          <div class="stat-label">Receita</div>
+          <div class="stat-value-mid mt-1.5 text-[var(--winner)]">R$ 5.931</div>
+        </div>
+        <div>
+          <div class="stat-label">ROAS</div>
+          <div class="stat-value-mid mt-1.5">1,70x</div>
+        </div>
+      </div>
+      <div class="perf-bar">
+        <div style="width: 67%; height: 100%; background: #ec4899; opacity: 0.6;"></div>
+      </div>
+    </article>
+
+  </section>
+
+  <footer class="mt-10 pt-5 border-t border-[var(--border)]">
+    <p class="meta">v1 · home com KPIs accent-rail · combo chart bar+line clean · produtos como row-cards (rail colorido por slug)</p>
+  </footer>
+
+</main>
+
+</body>
+</html>
