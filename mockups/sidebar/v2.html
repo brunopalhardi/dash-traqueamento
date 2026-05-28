@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup · Sidebar · v2 (operator tool)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg: #09090b;
+    --bg-sidebar: #0a0a0c;
+    --bg-card: #141418;
+    --border: #232328;
+    --border-hi: #34343b;
+    --text: #fafafa;
+    --text-muted: #a1a1aa;
+    --text-faint: #52525b;
+    --winner: #34d399;
+  }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Geist', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.005em;
+  }
+  .mono { font-family: 'Geist Mono', monospace; font-feature-settings: 'tnum', 'zero'; }
+  .meta {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: var(--text-faint);
+    text-transform: lowercase;
+  }
+
+  /* SIDEBAR v2 — operator tool */
+  .sidebar {
+    width: 240px;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Section label */
+  .section-label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-weight: 500;
+    padding: 0 22px;
+    margin-bottom: 8px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 8px 16px;
+    margin: 0 12px;
+    border-radius: 5px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 150ms;
+    position: relative;
+  }
+  .nav-item:hover {
+    color: var(--text);
+    background: rgba(255,255,255,0.03);
+  }
+  .nav-item.is-active {
+    color: var(--text);
+    background: rgba(255,255,255,0.05);
+  }
+  .nav-item.is-active::before {
+    content: "";
+    position: absolute;
+    left: -12px;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    background: var(--text);
+    border-radius: 0 2px 2px 0;
+  }
+  .nav-item .icon {
+    width: 14px;
+    height: 14px;
+    color: var(--text-faint);
+    flex-shrink: 0;
+  }
+  .nav-item:hover .icon,
+  .nav-item.is-active .icon {
+    color: var(--text);
+  }
+  .nav-item .badge {
+    margin-left: auto;
+    font-family: 'Geist Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 5px;
+    border-radius: 3px;
+    background: rgba(52, 211, 153, 0.12);
+    color: var(--winner);
+    font-weight: 500;
+  }
+</style>
+</head>
+<body class="min-h-screen flex">
+
+<aside class="sidebar">
+  <!-- Brand block -->
+  <div class="p-6 border-b border-[var(--border)] flex flex-col gap-2">
+    <div class="flex items-center gap-2.5">
+      <!-- monogram with subtle gradient -->
+      <div class="h-7 w-7 rounded-md flex items-center justify-center" style="background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.12);">
+        <span class="mono text-[10px] font-bold tracking-tight">OBA</span>
+      </div>
+      <div>
+        <div class="font-medium text-[13px] leading-none tracking-tight">Traqueamento</div>
+        <div class="meta mt-1">tráfego pago + vendas</div>
+      </div>
+    </div>
+    <!-- Status line -->
+    <div class="flex items-center gap-2 mt-3 px-1">
+      <span class="h-1.5 w-1.5 rounded-full bg-[var(--winner)] shadow-[0_0_4px] shadow-emerald-400/80"></span>
+      <span class="meta">sincronizado · 15:32</span>
+    </div>
+  </div>
+
+  <!-- Nav sections -->
+  <nav class="flex-1 py-5">
+    <div class="section-label">Dashboards</div>
+    <div class="flex flex-col gap-0.5">
+      <a href="#" class="nav-item is-active">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        Visão Geral
+      </a>
+      <a href="#" class="nav-item">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+        Guia
+        <span class="badge">ATIVO</span>
+      </a>
+    </div>
+
+    <div class="section-label mt-7">Sistema</div>
+    <div class="flex flex-col gap-0.5">
+      <a href="#" class="nav-item">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Integrações
+      </a>
+    </div>
+  </nav>
+
+  <!-- Footer -->
+  <div class="px-5 py-4 border-t border-[var(--border)] space-y-3">
+    <button class="flex items-center gap-2 text-[11px] text-muted-foreground hover:text-foreground transition-colors mono lowercase">
+      <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg>
+      modo claro
+    </button>
+    <div class="meta flex items-center justify-between">
+      <span>v0.8.0</span>
+      <span class="text-[var(--text-faint)]">a080117</span>
+    </div>
+  </div>
+</aside>
+
+<div class="flex-1 p-12 border-l border-[var(--border)]">
+  <div class="meta mb-2">v2 — operator tool, com seções</div>
+  <h1 class="text-2xl font-medium mb-2 tracking-tight">Sidebar com seções + status</h1>
+  <p class="text-sm text-[var(--text-muted)] max-w-md mb-5">
+    Brand block com status de sync ao vivo. Nav agrupado por seções ("Dashboards" / "Sistema").
+    Item ativo ganha rail à esquerda (white, não gold). Badges contextuais
+    (ex.: "ATIVO" em verde) onde fizer sentido.
+  </p>
+  <p class="text-xs text-[var(--text-faint)] max-w-md mono">
+    Diferenças vs v1: agrupa nav em seções, brand bloco mais substancial com
+    status, footer mais compacto.
+  </p>
+</div>
+
+</body>
+</html>

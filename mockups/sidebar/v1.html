@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup · Sidebar · v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg: #09090b;
+    --bg-sidebar: #0c0c0e;
+    --bg-card: #141418;
+    --bg-card-hi: #1a1a1f;
+    --border: #232328;
+    --border-hi: #34343b;
+    --text: #fafafa;
+    --text-muted: #a1a1aa;
+    --text-faint: #52525b;
+    --winner: #34d399;
+  }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Geist', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.005em;
+  }
+  .mono { font-family: 'Geist Mono', monospace; font-feature-settings: 'tnum', 'zero'; }
+  .meta {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: var(--text-faint);
+    text-transform: lowercase;
+  }
+
+  /* SIDEBAR base */
+  .sidebar {
+    width: 240px;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+  }
+
+  /* Nav item base */
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    margin: 0 12px;
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 150ms;
+    position: relative;
+  }
+  .nav-item:hover {
+    color: var(--text);
+    background: rgba(255,255,255,0.03);
+  }
+  .nav-item.is-active {
+    color: var(--text);
+    background: rgba(255,255,255,0.05);
+  }
+  .nav-item .icon {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .nav-item:hover .icon,
+  .nav-item.is-active .icon {
+    color: var(--text);
+  }
+  .nav-item .ind {
+    margin-left: auto;
+    width: 4px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--winner);
+    box-shadow: 0 0 4px var(--winner);
+  }
+</style>
+</head>
+<body class="min-h-screen flex">
+
+<!-- VERSION 1: refined monogram, minimal -->
+<aside class="sidebar">
+  <!-- Brand -->
+  <div class="px-6 pb-7 flex items-center gap-2.5">
+    <!-- Monogram square: small, neutral -->
+    <div class="h-7 w-7 rounded-md bg-white/[0.06] border border-white/10 flex items-center justify-center">
+      <span class="mono text-[10px] font-semibold tracking-tight text-foreground">OBA</span>
+    </div>
+    <div class="font-medium text-sm tracking-tight">Traqueamento</div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 flex flex-col gap-0.5 px-0">
+    <a href="#" class="nav-item is-active">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+      Visão Geral
+      <span class="ind"></span>
+    </a>
+    <a href="#" class="nav-item">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+      Guia
+    </a>
+
+    <!-- Divider -->
+    <div class="h-px mx-4 my-3 bg-border"></div>
+
+    <a href="#" class="nav-item">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Configurações
+    </a>
+  </nav>
+
+  <!-- Footer -->
+  <div class="px-6 pt-4 mt-4 border-t border-border space-y-3">
+    <button class="flex items-center gap-2 text-[11px] text-muted-foreground hover:text-foreground transition-colors mono lowercase">
+      <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg>
+      modo claro
+    </button>
+    <div class="meta">
+      v0.8.0 <span class="text-[var(--text-faint)]">· a080117</span>
+    </div>
+  </div>
+</aside>
+
+<!-- Side-by-side: simulated main content -->
+<div class="flex-1 p-12 border-l border-[var(--border)]">
+  <div class="meta mb-2">v1 — neutral, monocromático</div>
+  <h1 class="text-2xl font-medium mb-2 tracking-tight">Sidebar refined</h1>
+  <p class="text-sm text-[var(--text-muted)] max-w-md">
+    Logo monograma em mono pequeno + texto. Active state subtle (background tint, sem accent gold).
+    Pip de status verde brilhante no item ativo. Footer em mono lowercase.
+  </p>
+</div>
+
+</body>
+</html>
