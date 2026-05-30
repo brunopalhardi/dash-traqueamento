@@ -226,7 +226,7 @@ export function FunnelTableDaily({ rows }: { rows: DailyFunnelRow[] }) {
           lastDate={asc[asc.length - 1]?.date}
         />
         <TrendCard
-          label="Conn. Rate"
+          label="Connect rate"
           value={fmt.pct1(totalConn)}
           color="#8b5cf6"
           values={connSeries}
@@ -351,7 +351,7 @@ export function FunnelTableDaily({ rows }: { rows: DailyFunnelRow[] }) {
                   </div>
                   {r.landingPageView > 0 && (
                     <div className="font-mono text-[10px] tracking-wide text-muted-foreground/60 lowercase">
-                      conn {fmt.pct1(conn)}
+                      connect rate {fmt.pct1(conn)}
                     </div>
                   )}
                 </div>

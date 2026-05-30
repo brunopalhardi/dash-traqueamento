@@ -104,12 +104,13 @@ export default async function GuiaPage({
     getPageFunnel("guia", currentRange, { onlyActive }),
   ]);
 
-  // Top 5 criativos por menor CPA (só os com venda — CPA exige compra).
-  // O conjunto amplo (creativeFunnel) alimenta os highlights, incluindo o
-  // alerta "maior gasto · 0 compras", que sumiria se filtrássemos aqui.
-  const topCreativesByCpa = creativeFunnel
+  // Top 5 criativos por quantidade de vendas (só os com venda).
+  // Empate em vendas → desempata pelo menor CPA. O conjunto amplo
+  // (creativeFunnel) alimenta os highlights, incluindo o alerta
+  // "maior gasto · 0 compras", que sumiria se filtrássemos aqui.
+  const topCreativesBySales = creativeFunnel
     .filter((c) => c.purchase > 0)
-    .sort((a, b) => a.spend / a.purchase - b.spend / b.purchase)
+    .sort((a, b) => b.purchase - a.purchase || a.spend / a.purchase - b.spend / b.purchase)
     .slice(0, 5);
 
   const currentDaily = buildDailyPoints(currentRange, dailyHot, dailyMeta);
@@ -244,7 +245,7 @@ export default async function GuiaPage({
       <Card className="bg-card border-border/60 mb-6">
         <CardHeader>
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            Detalhamento por criativo · top 5 por CPA
+            Detalhamento por criativo · top 5 por vendas
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -257,7 +258,7 @@ export default async function GuiaPage({
               })),
             )}
           />
-          <FunnelTableCreative rows={topCreativesByCpa} basePath="/guia/criativo" />
+          <FunnelTableCreative rows={topCreativesBySales} basePath="/guia/criativo" />
         </CardContent>
       </Card>
 

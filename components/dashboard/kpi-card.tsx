@@ -51,6 +51,16 @@ export function KpiCard({
   const goodPositive = delta ? (invertDelta ? !delta.positive : delta.positive) : false;
   const deltaStyle = delta ? DELTA_STYLES[goodPositive ? "good" : "bad"] : null;
 
+  // Em grid de 6 colunas o card é estreito; valores longos (ex.: receita na
+  // casa dos milhares em lançamento) estouravam e eram cortados pelo
+  // overflow-hidden. Escala a fonte pelo comprimento do texto.
+  const valueSize =
+    value.length <= 9
+      ? "text-[30px]"
+      : value.length <= 12
+        ? "text-2xl"
+        : "text-xl";
+
   return (
     <div className="relative rounded-md border border-border bg-card pl-[22px] pr-5 py-[18px] overflow-hidden transition-colors hover:border-border-hi">
       <div className={`absolute inset-y-0 left-0 w-0.5 ${RAIL[resolvedTone]}`} />
@@ -68,7 +78,9 @@ export function KpiCard({
         ) : null}
       </div>
 
-      <div className="font-mono font-medium tabular-nums text-[30px] leading-none tracking-tight mt-2.5">
+      <div
+        className={`font-mono font-medium tabular-nums ${valueSize} leading-none tracking-tight mt-2.5 whitespace-nowrap`}
+      >
         {value}
       </div>
 

@@ -261,7 +261,7 @@ export function FunnelTableCampaign({ rows }: { rows: CampaignFunnelRow[] }) {
                 </div>
                 <div>
                   <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
-                    Conn.
+                    Connect rate
                   </div>
                   <div className="font-mono text-sm tabular-nums mt-1 font-medium">
                     {fmt.pct1(ratio(r.landingPageView, r.clicks))}
@@ -338,7 +338,7 @@ export function FunnelTableCampaign({ rows }: { rows: CampaignFunnelRow[] }) {
           </div>
           <div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
-              Conn. Médio
+              Connect rate méd.
             </div>
             <div className="font-mono font-medium tabular-nums text-xl leading-none tracking-tight mt-1.5">
               {fmt.pct1(ratio(tot.lpv, tot.clicks))}
