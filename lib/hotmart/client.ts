@@ -97,8 +97,15 @@ export async function fetchBuyerPhone(
     };
     const buyer = data.items?.[0]?.users?.find((u) => u.role === "BUYER")?.user;
     if (!buyer) return null;
+    // A API devolve o campo vazio como "" (não null), e pro comprador o número
+    // costuma vir em `phone` com `cellphone: ""` (ou vice-versa). `??` não cai
+    // pro fallback em string vazia — usar `||` sobre o valor já trimado.
+    const phone =
+      (buyer.cellphone && buyer.cellphone.trim()) ||
+      (buyer.phone && buyer.phone.trim()) ||
+      null;
     return {
-      phone: buyer.cellphone ?? buyer.phone ?? null,
+      phone,
       email: buyer.email ?? null,
     };
   }

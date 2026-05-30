@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { fetchSalesHistory } from "./client";
+import { fetchSalesHistory, fetchBuyerPhone } from "./client";
 import { invalidateAccessTokenCache } from "./oauth";
 
 const TOKEN_RESPONSE = () =>
@@ -101,5 +101,52 @@ describe("fetchSalesHistory", () => {
       endDate: new Date("2026-05-17T00:00:00Z"),
     });
     await expect(collect(iter)).rejects.toThrow(/hotmart sales-history.*500.*server error/);
+  });
+});
+
+function usersResponse(users: Array<{ role: string; user: Record<string, unknown> }>) {
+  return new Response(JSON.stringify({ items: [{ users }] }), { status: 200 });
+}
+
+describe("fetchBuyerPhone", () => {
+  it("cai pro `phone` quando `cellphone` vem string vazia (regressão do ??)", async () => {
+    // Caso real da API: BUYER com cellphone:"" e phone preenchido.
+    vi.spyOn(global, "fetch")
+      .mockImplementationOnce(async () => TOKEN_RESPONSE())
+      .mockImplementationOnce(async () =>
+        usersResponse([
+          { role: "PRODUCER", user: { cellphone: "14997836885", phone: "" } },
+          { role: "BUYER", user: { cellphone: "", phone: "32985154774", email: "b@x.com" } },
+        ]),
+      );
+    const result = await fetchBuyerPhone("HP123");
+    expect(result).toEqual({ phone: "32985154774", email: "b@x.com" });
+  });
+
+  it("usa `cellphone` quando preenchido", async () => {
+    vi.spyOn(global, "fetch")
+      .mockImplementationOnce(async () => TOKEN_RESPONSE())
+      .mockImplementationOnce(async () =>
+        usersResponse([{ role: "BUYER", user: { cellphone: "11940814352", phone: "" } }]),
+      );
+    const result = await fetchBuyerPhone("HP123");
+    expect(result?.phone).toBe("11940814352");
+  });
+
+  it("retorna phone null quando ambos vazios", async () => {
+    vi.spyOn(global, "fetch")
+      .mockImplementationOnce(async () => TOKEN_RESPONSE())
+      .mockImplementationOnce(async () =>
+        usersResponse([{ role: "BUYER", user: { cellphone: "", phone: "" } }]),
+      );
+    const result = await fetchBuyerPhone("HP123");
+    expect(result?.phone).toBeNull();
+  });
+
+  it("retorna null em 404", async () => {
+    vi.spyOn(global, "fetch")
+      .mockImplementationOnce(async () => TOKEN_RESPONSE())
+      .mockImplementationOnce(async () => new Response("not found", { status: 404 }));
+    expect(await fetchBuyerPhone("HP404")).toBeNull();
   });
 });
