@@ -161,7 +161,7 @@ export function FunnelTableDaily({ rows }: { rows: DailyFunnelRow[] }) {
   );
   const purchasesSeries = asc.map((r) => r.purchase);
   const spendSeries = asc.map((r) => r.spend);
-  const connSeries = asc.map((r) => ratio(r.landingPageView, r.clicks));
+  const connSeries = asc.map((r) => ratio(r.landingPageView, r.linkClicks));
 
   // Best/worst day por CPA entre dias com compra
   const withPurchase = rows.filter((r) => r.purchase > 0);
@@ -182,18 +182,19 @@ export function FunnelTableDaily({ rows }: { rows: DailyFunnelRow[] }) {
     (acc, r) => ({
       impressions: acc.impressions + r.impressions,
       clicks: acc.clicks + r.clicks,
+      linkClicks: acc.linkClicks + r.linkClicks,
       spend: acc.spend + r.spend,
       lpv: acc.lpv + r.landingPageView,
       chkt: acc.chkt + r.initiateCheckout,
       purchase: acc.purchase + r.purchase,
     }),
-    { impressions: 0, clicks: 0, spend: 0, lpv: 0, chkt: 0, purchase: 0 },
+    { impressions: 0, clicks: 0, linkClicks: 0, spend: 0, lpv: 0, chkt: 0, purchase: 0 },
   );
 
   // Sumários para os trend cards (valor agregado)
   const totalCpa = tot.purchase > 0 ? tot.spend / tot.purchase : NaN;
   const avgSpendPerDay = tot.spend / rows.length;
-  const totalConn = ratio(tot.lpv, tot.clicks);
+  const totalConn = ratio(tot.lpv, tot.linkClicks);
 
   const maxSpend = Math.max(...rows.map((r) => r.spend), 1);
 
@@ -247,7 +248,7 @@ export function FunnelTableDaily({ rows }: { rows: DailyFunnelRow[] }) {
           const parsed = parseDate(r.date);
           const spendBarPct = Math.min(100, (r.spend / maxSpend) * 100);
           const ctr = ratio(r.clicks, r.impressions);
-          const conn = ratio(r.landingPageView, r.clicks);
+          const conn = ratio(r.landingPageView, r.linkClicks);
 
           return (
             <article

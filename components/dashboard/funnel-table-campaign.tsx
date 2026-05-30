@@ -145,12 +145,13 @@ export function FunnelTableCampaign({ rows }: { rows: CampaignFunnelRow[] }) {
     (acc, r) => ({
       impressions: acc.impressions + r.impressions,
       clicks: acc.clicks + r.clicks,
+      linkClicks: acc.linkClicks + r.linkClicks,
       spend: acc.spend + r.spend,
       lpv: acc.lpv + r.landingPageView,
       chkt: acc.chkt + r.initiateCheckout,
       purchase: acc.purchase + r.purchase,
     }),
-    { impressions: 0, clicks: 0, spend: 0, lpv: 0, chkt: 0, purchase: 0 },
+    { impressions: 0, clicks: 0, linkClicks: 0, spend: 0, lpv: 0, chkt: 0, purchase: 0 },
   );
 
   return (
@@ -264,7 +265,7 @@ export function FunnelTableCampaign({ rows }: { rows: CampaignFunnelRow[] }) {
                     Connect rate
                   </div>
                   <div className="font-mono text-sm tabular-nums mt-1 font-medium">
-                    {fmt.pct1(ratio(r.landingPageView, r.clicks))}
+                    {fmt.pct1(ratio(r.landingPageView, r.linkClicks))}
                   </div>
                 </div>
                 <div>
@@ -341,7 +342,7 @@ export function FunnelTableCampaign({ rows }: { rows: CampaignFunnelRow[] }) {
               Connect rate méd.
             </div>
             <div className="font-mono font-medium tabular-nums text-xl leading-none tracking-tight mt-1.5">
-              {fmt.pct1(ratio(tot.lpv, tot.clicks))}
+              {fmt.pct1(ratio(tot.lpv, tot.linkClicks))}
             </div>
           </div>
           <div>

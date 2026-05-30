@@ -61,6 +61,8 @@ export interface DailyFunnelRow {
   date: string;
   impressions: number;
   clicks: number;
+  /** inline_link_clicks — denominador do connect rate (Meta) */
+  linkClicks: number;
   spend: number;
   landingPageView: number;
   initiateCheckout: number;
@@ -85,6 +87,7 @@ export async function getDailyFunnel(
       date: adInsightsDaily.date,
       impressions: sql<number>`coalesce(sum(${adInsightsDaily.impressions})::int, 0)`,
       clicks: sql<number>`coalesce(sum(${adInsightsDaily.clicks})::int, 0)`,
+      linkClicks: sql<number>`coalesce(sum(${adInsightsDaily.linkClicks})::int, 0)`,
       spend: sql<number>`coalesce(sum(${adInsightsDaily.spend})::float, 0)`,
       lpv: sql<number>`coalesce(sum((${adInsightsDaily.conversions}->>'landing_page_view')::int), 0)`,
       chkt: sql<number>`coalesce(sum((${adInsightsDaily.conversions}->>'initiate_checkout')::int), 0)`,
@@ -103,6 +106,7 @@ export async function getDailyFunnel(
     date: r.date,
     impressions: Number(r.impressions),
     clicks: Number(r.clicks),
+    linkClicks: Number(r.linkClicks),
     spend: Number(r.spend),
     landingPageView: Number(r.lpv),
     initiateCheckout: Number(r.chkt),
@@ -121,6 +125,8 @@ export interface CampaignFunnelRow {
   adCount: number;
   impressions: number;
   clicks: number;
+  /** inline_link_clicks — denominador do connect rate (Meta) */
+  linkClicks: number;
   spend: number;
   reach: number;
   landingPageView: number;
@@ -151,6 +157,7 @@ export async function getCampaignFunnel(
       adCount: sql<number>`count(distinct ${ads.id})::int`,
       impressions: sql<number>`coalesce(sum(${adInsightsDaily.impressions})::int, 0)`,
       clicks: sql<number>`coalesce(sum(${adInsightsDaily.clicks})::int, 0)`,
+      linkClicks: sql<number>`coalesce(sum(${adInsightsDaily.linkClicks})::int, 0)`,
       spend: sql<number>`coalesce(sum(${adInsightsDaily.spend})::float, 0)`,
       reach: sql<number>`coalesce(sum(${adInsightsDaily.reach})::int, 0)`,
       lpv: sql<number>`coalesce(sum((${adInsightsDaily.conversions}->>'landing_page_view')::int), 0)`,
@@ -175,6 +182,7 @@ export async function getCampaignFunnel(
     adCount: Number(r.adCount),
     impressions: Number(r.impressions),
     clicks: Number(r.clicks),
+    linkClicks: Number(r.linkClicks),
     spend: Number(r.spend),
     reach: Number(r.reach),
     landingPageView: Number(r.lpv),
