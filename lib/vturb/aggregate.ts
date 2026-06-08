@@ -12,12 +12,14 @@ export function aggregatePageDay(players: PlayerDayInput[]): PageDayAgg {
   const playWeighted = (f: (p: PlayerDayInput) => number) =>
     plays > 0 ? players.reduce((s, p) => s + f(p) * p.plays, 0) / plays : 0;
 
+  // VTurb define engagement_rate ≈ tempo_assistido / duração * 100, então
+  // avgWatchedSec = (engagementRate/100) * duração. Ponderado por plays.
   const engagementRate = playWeighted((p) => p.engagementRate);
   const avgWatchedSec = playWeighted((p) => (p.engagementRate / 100) * p.durationSec);
 
   const anyPitch = players.some((p) => p.pitchTimeSec > 0);
   const pitchDenom = overPitch + underPitch;
-  const pitchRetentionRate = !anyPitch ? null : pitchDenom > 0 ? (overPitch / pitchDenom) * 100 : 0;
+  const pitchRetentionRate = !anyPitch || pitchDenom === 0 ? null : (overPitch / pitchDenom) * 100;
 
   return {
     views, plays, finished, clicks, overPitch, underPitch,
@@ -32,8 +34,8 @@ export function normalizeCurve(grouped: GroupedTimed[], durationSec: number): Cu
   if (durationSec <= 0) return buckets;
   const sorted = [...grouped].sort((a, b) => a.timed - b.timed);
   for (const g of sorted) {
-    const pct = Math.round((g.timed / durationSec) * 100);
-    if (pct >= 0 && pct <= 100) buckets[pct] = { pct, users: g.total_users };
+    const pct = Math.min(100, Math.max(0, Math.round((g.timed / durationSec) * 100)));
+    buckets[pct] = { pct, users: g.total_users };
   }
   return buckets;
 }

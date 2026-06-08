@@ -31,6 +31,11 @@ describe("aggregatePageDay", () => {
     expect(r.avgWatchedSec).toBe(0);
     expect(r.engagementRate).toBe(0);
   });
+
+  it("pitchRetentionRate = null quando pitch configurado mas sem dado (denom 0)", () => {
+    const p = { ...base, views: 10, plays: 5, overPitch: 0, underPitch: 0, pitchTimeSec: 400 };
+    expect(aggregatePageDay([p]).pitchRetentionRate).toBeNull();
+  });
 });
 
 describe("normalizeCurve", () => {
@@ -44,6 +49,11 @@ describe("normalizeCurve", () => {
   });
   it("duração 0 → curva vazia (101 buckets zerados)", () => {
     expect(normalizeCurve([{ timed: 0, total_users: 5 }], 0).every((b) => b.users === 0)).toBe(true);
+  });
+
+  it("clampa timed acima da duração pro bucket 100", () => {
+    const c = normalizeCurve([{ timed: 805, total_users: 7 }], 800);
+    expect(c[100]).toEqual({ pct: 100, users: 7 });
   });
 });
 
