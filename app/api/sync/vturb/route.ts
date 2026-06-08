@@ -38,8 +38,14 @@ export async function POST(req: NextRequest) {
 
   const mode = parseMode(req);
   const client = createVturbClient({ token });
-  const result = await syncVturb({ client, range: rangeFor(mode) });
-  return NextResponse.json(result);
+  try {
+    const result = await syncVturb({ client, range: rangeFor(mode) });
+    return NextResponse.json(result);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[vturb-sync] failed:", message);
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+  }
 }
 
 export const GET = POST;
