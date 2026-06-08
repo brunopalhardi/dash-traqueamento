@@ -88,6 +88,21 @@ Dashboard focado em **Desafio + Guia**. Tudo de C1, Sono, Instagram e tracking-J
 - `utm_medium`: `Instagram` / `Whatsapp` / `01-Q`
 - `utm_content`: `Reels` / `AD10-IMG-DESAFIO`
 
+### Convenção de nomes de campanha (Meta) → atribuição por produto
+
+A atribuição de **gasto/tráfego** a cada produto é por **conta Meta + regex no nome da campanha** (`lib/products.ts`). Por isso a nomenclatura importa: se uma campanha não casa o regex, o gasto dela **some silenciosamente** do dashboard (mas a receita vem do Hotmart por `productSlug`, então fica descasado → ROAS fantasma). Convenção atual do Bruno:
+
+- **Guia** (`act_972744231680763` — "CA01 - OBA - FUNIS"):
+  - `B-PERPETUO-GA-…` — campanhas do Guia (`GA` = Guia do Alzheimer). Divididas por **grupo**: `B-PERPETUO-GA-GRUPO-EXAUSTÃO-A/B/C`. Hoje só existe o grupo **EXAUSTÃO**; futuramente entra **SONO** e outros (`-GRUPO-SONO-…`).
+  - `B-PERPETUO-GUIA-F-Remarketing …` — remarketing do Guia (Checkout/Página).
+  - `[C1] Post do Instagram: …` — **NÃO é Guia**. É post impulsionado avulso; deve entrar só como **gasto geral no dash Geral**, não no Guia.
+  - Regex vivo: `/PERPETUO-GA|PERPETUO-GUIA|GUIA.*OBA/i`.
+- **Desafio** (`act_1394993860878989` — "CA02 - OBA - LANÇAMENTOS"): `…VENDAS-DESAFIO…`. Regex `/VENDAS-DESAFIO/i`.
+
+> Bug histórico (corrigido 2026-06-08): regex do Guia era só `PERPETUO-GUIA|GUIA.*OBA`, então só pegava o remarketing (R$ 11,34) e ignorava ~R$ 1.124 das campanhas `PERPETUO-GA`. Ao mexer em nomenclatura, conferir aqui e no `lib/products.ts`. Diag rápido: `scripts/diag-guia-spend.ts`.
+
+**Roadmap pedido pelo Bruno (ainda não implementado):** quebrar a visualização do Guia por grupo (EXAUSTÃO/SONO/…), isolar o gasto de remarketing e mostrar vendas atribuídas a ele (limitação: venda vem do Hotmart sem link de campanha; só o Meta tem purchase por campanha, e não bate). Brainstorm/plano pendente.
+
 ### Secret KEYs
 
 Diretório `Secret KEYs/` (gitignored) com `tokens.md` consolidando todos os secrets (Meta Ads, Meta IG, Supabase, Vercel, Upstash, Hotmart placeholders). Espelha o `~/.traqueamento-secrets/credentials.env` antigo.

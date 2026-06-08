@@ -49,7 +49,11 @@ export const PRODUCTS: Product[] = [
     shortLabel: "Guia",
     description: "Produto perpétuo, ticket maior",
     metaAccountId: "act_972744231680763",
-    namePattern: /PERPETUO-GUIA|GUIA.*OBA/i,
+    // Nomenclatura do Bruno: campanhas do Guia usam o prefixo PERPETUO-GA
+    // (GA = Guia do Alzheimer), divididas por grupo (ex.: -GRUPO-EXAUSTÃO-*),
+    // mais o remarketing PERPETUO-GUIA-F-*. NÃO inclui os posts [C1] do
+    // Instagram — esses caem como gasto geral no dash Geral.
+    namePattern: /PERPETUO-GA|PERPETUO-GUIA|GUIA.*OBA/i,
     accent: "amber-500",
     defaultRangeDays: 30,
   },
