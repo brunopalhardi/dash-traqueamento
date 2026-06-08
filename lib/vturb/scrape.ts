@@ -27,3 +27,28 @@ export function extractPlayerIds(html: string): string[] {
   for (const m of html.matchAll(RE_PLAYERS_PATH)) ids.add(m[1].toLowerCase());
   return [...ids];
 }
+
+export interface ScrapeResult {
+  status: "ok" | "no_embed" | "http_error";
+  httpStatus: number | null;
+  players: string[];
+}
+
+const UA = "Mozilla/5.0 (compatible; TraqueamentoBot/1.0)";
+
+export async function fetchPlayerIds(url: string, fetchImpl: typeof fetch = fetch): Promise<ScrapeResult> {
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 10_000);
+    const res = await fetchImpl(url, { redirect: "follow", headers: { "User-Agent": UA }, signal: ctrl.signal });
+    clearTimeout(timer);
+    if (res.status < 200 || res.status >= 400) {
+      return { status: "http_error", httpStatus: res.status, players: [] };
+    }
+    const html = await res.text();
+    const players = extractPlayerIds(html);
+    return { status: players.length ? "ok" : "no_embed", httpStatus: res.status, players };
+  } catch {
+    return { status: "http_error", httpStatus: null, players: [] };
+  }
+}

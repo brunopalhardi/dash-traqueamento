@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { normalizePageUrl, extractPlayerIds } from "./scrape";
+import { describe, it, expect, vi } from "vitest";
+import { normalizePageUrl, extractPlayerIds, fetchPlayerIds } from "./scrape";
 
 describe("normalizePageUrl", () => {
   it("tira query string e UTM, mantém host+path", () => {
@@ -39,5 +39,29 @@ describe("extractPlayerIds", () => {
   });
   it("retorna vazio quando não há embed", () => {
     expect(extractPlayerIds("<html><body>sem player</body></html>")).toEqual([]);
+  });
+});
+
+describe("fetchPlayerIds", () => {
+  it("retorna ok + players quando HTML tem embed", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      status: 200,
+      text: async () => `players/6a13a0b8fdf7a4c849eb57ba/v4/player.js`,
+    } as Response);
+    const r = await fetchPlayerIds("https://x.lovable.app/", fetchImpl);
+    expect(r).toEqual({ status: "ok", httpStatus: 200, players: ["6a13a0b8fdf7a4c849eb57ba"] });
+  });
+  it("no_embed quando 200 sem player", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ status: 200, text: async () => "<html></html>" } as Response);
+    expect(await fetchPlayerIds("https://x.lovable.app/", fetchImpl)).toEqual({ status: "no_embed", httpStatus: 200, players: [] });
+  });
+  it("http_error quando 404", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ status: 404, text: async () => "not found" } as Response);
+    expect(await fetchPlayerIds("https://x.lovable.app/", fetchImpl)).toEqual({ status: "http_error", httpStatus: 404, players: [] });
+  });
+  it("http_error quando fetch lança", async () => {
+    const fetchImpl = vi.fn().mockRejectedValue(new Error("network"));
+    const r = await fetchPlayerIds("https://x.lovable.app/", fetchImpl);
+    expect(r.status).toBe("http_error");
   });
 });
