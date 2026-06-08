@@ -6,3 +6,4 @@ export * from "./whatsapp";
 export * from "./purchases";
 export * from "./sendflow";
 export * from "./views";
+export * from "./vturb";
