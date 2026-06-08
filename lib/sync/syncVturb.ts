@@ -1,4 +1,4 @@
-import { and, eq, gte, lte } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db as defaultDb } from "@/lib/db";
 import { ads, adsets, campaigns, adAccounts } from "@/lib/schema/meta";
 import {
@@ -91,7 +91,7 @@ export async function syncVturb(deps: SyncVturbDeps): Promise<SyncVturbResult> {
       });
   }
 
-  const pages = await db.select().from(vturbPages)
+  const pages = await db.select({ id: vturbPages.id, pageUrl: vturbPages.pageUrl }).from(vturbPages)
     .where(and(eq(vturbPages.productSlug, slug), eq(vturbPages.isActive, true)));
 
   for (const page of pages) {
@@ -129,6 +129,7 @@ export async function syncVturb(deps: SyncVturbDeps): Promise<SyncVturbResult> {
       for (const pid of playerIds) {
         const meta = playerById.get(pid)!;
         const stats = await deps.client.sessionStatsByDay({ playerId: pid, startDate: deps.range.from, endDate: deps.range.to });
+        await sleep(150);
         for (const s of stats) {
           const input: PlayerDayInput = {
             views: s.views, plays: s.plays, finished: s.finished, clicks: s.clicks,
@@ -143,8 +144,8 @@ export async function syncVturb(deps: SyncVturbDeps): Promise<SyncVturbResult> {
           const curve = normalizeCurve(eng.groupedTimed, meta.durationSec);
           if (!perDayCurves.has(s.date)) perDayCurves.set(s.date, []);
           perDayCurves.get(s.date)!.push(curve);
+          await sleep(150); // throttle entre cada chamada à API VTurb (rate limit)
         }
-        await sleep(150);
       }
 
       for (const [day, inputs] of perDay) {
@@ -170,6 +171,8 @@ export async function syncVturb(deps: SyncVturbDeps): Promise<SyncVturbResult> {
 
         const curves = perDayCurves.get(day) ?? [];
         const merged = mergeCurves(curves);
+        // mobile+desktop de uma página compartilham o mesmo VSL (mesma duração/pitch);
+        // usamos o 1º player (ordem de scraping = vídeo principal) pra anotar duração/pitch da curva.
         const firstPlayer = playerById.get(playerIds[0])!;
         const pitchPct = firstPlayer.pitchTimeSec > 0 && firstPlayer.durationSec > 0
           ? (firstPlayer.pitchTimeSec / firstPlayer.durationSec) * 100 : null;
