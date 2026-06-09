@@ -58,10 +58,11 @@ Dashboard focado em **Desafio + Guia**. Tudo de C1, Sono, Instagram e tracking-J
 
 - `/` — Visão Geral consolidada (Desafio + Guia)
 - `/desafio` — KPIs semanais + ciclos comparados + Tráfego + Top Criativos + **Compradores da semana** (com ✅/❌ "no grupo") + GroupPanel
-- `/guia` — espelhado do Desafio, sem coluna "no grupo" (Guia não tem grupo WhatsApp)
-- `/settings/integrations` — toggle contas Meta
+- `/guia` — espelhado do Desafio, sem coluna "no grupo" (Guia não tem grupo WhatsApp) + card **"Páginas ativas · vídeo (VSL)"** (métricas VTurb por página)
+- `/guia/pagina/[pageId]` — drill-down VTurb: curva de retenção + linha do pitch + evolução diária de tempo médio
+- `/settings/integrations` — toggle contas Meta + painel **VTurb · mapeamento manual** página→player
 - `/login`
-- `/api/webhooks/sendflow`, `/api/webhooks/hotmart`, `/api/sync/*`, `/api/meta/*`, `/api/health`
+- `/api/webhooks/sendflow`, `/api/webhooks/hotmart`, `/api/sync/*` (inclui `/api/sync/vturb`), `/api/vturb/map`, `/api/meta/*`, `/api/health`
 
 ### Stack ativa
 
@@ -69,12 +70,15 @@ Dashboard focado em **Desafio + Guia**. Tudo de C1, Sono, Instagram e tracking-J
 - SendFlow webhook → tabelas `whatsapp_*` (entrada/saída de grupo)
 - Hotmart webhook → tabela `purchases` (PURCHASE_APPROVED/REFUNDED/CHARGEBACK, idempotente por `transaction_id`)
 - Match comprador↔grupo via `buyer_phone_e164 ↔ whatsapp_group_members.phone_normalized` (E.164 normalizado em ambos os lados via `lib/utils/phone.ts`)
+- **VTurb sync** (cron diário 08h UTC, `/api/sync/vturb`) → métricas de VSL por **página ativa do Guia**. 4 passos: catálogo de players → descobre páginas ativas (URLs de anúncios ACTIVE) → resolve player_id por **scrape do HTML** do embed (fallback manual em settings) → puxa métricas da Analytics API VTurb e faz upsert em 5 tabelas (`vturb_players/pages/page_players/page_daily/retention_daily`). Junta com gasto/venda do Meta por **URL normalizada**. Soma mobile+desktop e **recalcula taxas a partir do total** (não média de médias). Lógica pura testada em `lib/vturb/*`. Saúde da página (🟢 mapeado / 🟡 sem embed / 🔴 404) vira badge na tabela. Spec/plano: `docs/superpowers/{specs,plans}/2026-06-08-vturb-integration*.md`.
 
 ### Pendências imediatas
 
 1. **Bruno cadastrar Hotmart webhook em produção** — setar `HOTTOK` na Vercel e cadastrar webhook no painel Hotmart apontando pra `https://dash-traqueamento.vercel.app/api/webhooks/hotmart` com eventos `PURCHASE_APPROVED`, `PURCHASE_REFUNDED`, `PURCHASE_CHARGEBACK`. Sem isso, "Compradores da semana" fica vazia.
 2. **Bruno disponibilizar planilha de UTMs** — quando disponível, monto importador da planilha pra popular a tabela `leads` (preservada, mas hoje vazia). Depois cruza com `purchases.buyer_phone_e164` pra atribuição cria→venda.
-3. **(Pré-existente) Materialized views Postgres** — `adset_insights_daily` e `campaign_insights_daily` existem em prod mas não estão declaradas no schema Drizzle. `db:push` dropariam ambas. Não usar `db:push` em prod até resolver (declarar no schema ou aplicar migrations via `drizzle-kit migrate`).
+3. **(Pré-existente) Materialized views Postgres** — `adset_insights_daily` e `campaign_insights_daily` existem em prod mas não estão declaradas no schema Drizzle. `db:push` dropariam ambas. **Nunca usar `db:push` em prod** — sempre `drizzle-kit migrate`. (Declarar as MVs no schema continua pendente.)
+   > **Resolvido 2026-06-09 (parte do migrate):** o `db:migrate` estava quebrado — migrations `0013` (sendflow_leadscoring), `0014` (ads.landing_url) e `0015` (vturb) tinham os efeitos **já aplicados em prod** (provavelmente por `db:push` antigo) mas **não estavam gravadas no `drizzle.__drizzle_migrations`**. Resultado: `0014 ADD COLUMN` abortava com "column already exists" e travava o chain antes da `0015`. Reconciliei inserindo as 3 linhas no journal (hash + `created_at` do `_journal.json`), sem editar migrations. `db:migrate` voltou a rodar limpo (EXIT 0). **Lição:** `db:push` aplica schema mas NÃO grava no journal → quebra `db:migrate` depois. Ver `[[drizzle-db-push-quebra-migrate]]` no vault-trabalho.
+4. **Bruno setar `VTURB_API_TOKEN` na Vercel** (Production env var) — sem isso o cron `/api/sync/vturb` (08h UTC) falha em prod. Token está no `.env.local` e em `Secret KEYs/tokens.md`. Backfill local de 30 dias já rodou (10 páginas ativas, 5 com vídeo, 85 dias). **Achado da feature:** 2 anúncios ativos apontam pra páginas 404 (`guia-alzheimer-pa-ex-v3`, `pb-ex-v3`) — gasto em página morta, conferir no Meta.
 
 ### Follow-ups não-bloqueantes
 
