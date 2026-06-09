@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
 
 function mmss(sec: number): string {
   if (!sec || sec <= 0) return "—";
-  return `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, "0")}`;
+  const total = Math.round(sec); // arredonda antes de dividir pra não gerar "3:60"
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
 export default async function PaginaDetail({
