@@ -30,6 +30,9 @@ import {
   getDailyFunnel,
   getPageFunnel,
 } from "@/lib/queries/funnel";
+import { getActivePagesWithVideo } from "@/lib/queries/vturb";
+import { normalizePageUrl } from "@/lib/vturb/scrape";
+import { PagesVideoTable, type PageVideoTableRow } from "@/components/dashboard/pages-video-table";
 import type { DateRange, DailyPoint } from "@/lib/queries/dashboard";
 import type { DailyPurchasePoint } from "@/lib/queries/purchases";
 
@@ -86,6 +89,7 @@ export default async function GuiaPage({
     prevKpis, prevPurchaseCount, prevRevenueHot, prevDailyHot, prevDailyMeta,
     buyers,
     dailyFunnel, campaignFunnel, creativeFunnel, pageFunnel,
+    videoPages, pageFunnelActive,
   ] = await Promise.all([
     getKpis("guia", currentRange),
     getApprovedPurchaseCount("guia", currentRange),
@@ -102,7 +106,35 @@ export default async function GuiaPage({
     getCampaignFunnel("guia", currentRange, { onlyActive }),
     getCreativeFunnel("guia", currentRange, 50, { onlyActive }),
     getPageFunnel("guia", currentRange, { onlyActive }),
+    getActivePagesWithVideo("guia", currentRange),
+    getPageFunnel("guia", currentRange, { onlyActive: true }),
   ]);
+
+  // Junta vídeo (VTurb, por URL normalizada) com gasto/venda (Meta, pixel) das
+  // páginas ativas. A tabela é sempre sobre páginas ativas, então usa
+  // pageFunnelActive (onlyActive: true), independente do toggle do topo.
+  const spendByUrl = new Map<string, { spend: number; purchase: number }>();
+  for (const p of pageFunnelActive) {
+    const norm = normalizePageUrl(p.landingUrl);
+    if (!norm) continue;
+    const cur = spendByUrl.get(norm) ?? { spend: 0, purchase: 0 };
+    cur.spend += p.spend; cur.purchase += p.purchase;
+    spendByUrl.set(norm, cur);
+  }
+  const pageRows: PageVideoTableRow[] = videoPages.map((v) => {
+    const u = new URL(v.pageUrl);
+    const money = spendByUrl.get(v.pageUrl) ?? { spend: 0, purchase: 0 };
+    return {
+      pageId: v.pageId,
+      host: u.hostname,
+      path: u.pathname,
+      health: (v.scrapeStatus === "ok" ? "ok" : v.scrapeStatus === "http_error" ? "http_error" : "no_embed") as PageVideoTableRow["health"],
+      lastHttpStatus: v.lastHttpStatus,
+      spend: money.spend, purchase: money.purchase,
+      avgWatchedSec: v.avgWatchedSec, playRate: v.playRate, engagementRate: v.engagementRate,
+      pitchRetentionRate: v.pitchRetentionRate, hasVideo: v.plays > 0,
+    };
+  }).sort((a, b) => b.spend - a.spend);
 
   // Top 5 criativos por quantidade de vendas (só os com venda).
   // Empate em vendas → desempata pelo menor CPA. O conjunto amplo
@@ -279,6 +311,17 @@ export default async function GuiaPage({
             )}
           />
           <FunnelTablePage rows={pageFunnel} />
+        </CardContent>
+      </Card>
+
+      <Card className="bg-card border-border/60 mb-6">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Páginas ativas · vídeo (VSL)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PagesVideoTable rows={pageRows} />
         </CardContent>
       </Card>
     </>
