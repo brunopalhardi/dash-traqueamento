@@ -113,6 +113,13 @@
       "when": 1781116709698,
       "tag": "0015_campaign_product_slug",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1781117745586,
+      "tag": "0016_sync_status_partial",
+      "breakpoints": true
     }
   ]
 }

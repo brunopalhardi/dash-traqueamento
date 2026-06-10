@@ -11,6 +11,10 @@
     {
       "path": "/api/sync/sendflow",
       "schedule": "30 6 * * *"
+    },
+    {
+      "path": "/api/sync/refresh-weekly",
+      "schedule": "0 7 * * 1"
     }
   ]
 }

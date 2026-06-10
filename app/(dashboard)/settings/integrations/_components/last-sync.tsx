@@ -22,7 +22,15 @@ export async function LastSync() {
         ) : (
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2">
-              <Badge variant={last.status === "done" ? "default" : "destructive"}>
+              <Badge
+                variant={
+                  last.status === "done"
+                    ? "default"
+                    : last.status === "partial"
+                      ? "secondary"
+                      : "destructive"
+                }
+              >
                 {last.status}
               </Badge>
               <span className="text-muted-foreground">

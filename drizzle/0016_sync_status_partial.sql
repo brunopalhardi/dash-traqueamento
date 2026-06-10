@@ -1,0 +1,1 @@
+ALTER TYPE "public"."sync_job_status" ADD VALUE 'partial' BEFORE 'failed';

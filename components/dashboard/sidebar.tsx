@@ -37,7 +37,7 @@ const SECTIONS: NavSection[] = [
 interface SidebarProps {
   /** Status do último sync Meta — passado pelo layout server component */
   lastSync?: {
-    status: "done" | "failed" | "running";
+    status: "done" | "failed" | "running" | "partial";
     finishedAt: Date | string | null;
   } | null;
 }
@@ -73,7 +73,7 @@ export function Sidebar({ lastSync }: SidebarProps = {}) {
   const syncTone =
     lastSync?.status === "done"
       ? "good"
-      : lastSync?.status === "running"
+      : lastSync?.status === "running" || lastSync?.status === "partial"
         ? "warn"
         : lastSync?.status === "failed"
           ? "bad"
@@ -88,9 +88,11 @@ export function Sidebar({ lastSync }: SidebarProps = {}) {
     ? "sem sync"
     : lastSync.status === "done"
       ? `sync · ${formatSyncTime(lastSync.finishedAt)}`
-      : lastSync.status === "running"
-        ? "sincronizando…"
-        : `falhou · ${formatSyncTime(lastSync.finishedAt)}`;
+      : lastSync.status === "partial"
+        ? `sync parcial · ${formatSyncTime(lastSync.finishedAt)}`
+        : lastSync.status === "running"
+          ? "sincronizando…"
+          : `falhou · ${formatSyncTime(lastSync.finishedAt)}`;
 
   return (
     <aside className="w-60 bg-sidebar border-r border-sidebar-border flex flex-col sticky top-0 h-screen">
