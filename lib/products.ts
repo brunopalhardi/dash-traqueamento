@@ -85,3 +85,60 @@ export function detectProduct(
   }
   return "outros";
 }
+
+/**
+ * Mapa de produto da Hotmart → slug do dashboard, por IDENTIDADE do produto
+ * (id do produto na Hotmart + nome EXATO como fallback).
+ *
+ * NÃO usa substring: a palavra "guia" aparece em produtos distintos que NÃO são
+ * o Guia do Alzheimer (e-book "Higiene do Sono - Guia prático", "Guia de Viagem"),
+ * e um produto do Guia com nome sem "guia" sumiria. Sem match → "outros".
+ *
+ * O id só vem nos payloads recentes (webhook v2); o histórico (sync via Sales
+ * History API) frequentemente traz só o nome — por isso o nome exato é a chave
+ * de fallback confiável. Pra adicionar um produto novo, inclua o id (preferido)
+ * e/ou o nome exato aqui.
+ */
+interface HotmartProduct {
+  slug: Exclude<ProductSlug, "geral">;
+  /** ids do produto na Hotmart (`data.product.id`) */
+  hotmartIds: string[];
+  /** nomes exatos do produto (comparados com trim, case-insensitive) */
+  names: string[];
+}
+
+const HOTMART_PRODUCTS: HotmartProduct[] = [
+  {
+    slug: "guia",
+    hotmartIds: ["6753137"],
+    names: ["GUIA ALZHEIMER - O PRIMEIRO PASSO PARA CUIDAR"],
+  },
+  {
+    slug: "desafio",
+    hotmartIds: ["7523998"],
+    names: ["Desafio O Bom do Alzheimer"],
+  },
+];
+
+/**
+ * Classifica uma compra Hotmart no slug do dashboard. Prefere o id do produto;
+ * cai pro nome exato (trim, case-insensitive) quando o id não vem no payload.
+ */
+export function classifyPurchaseProduct(
+  productId: string | null | undefined,
+  productName: string | null | undefined,
+): ProductSlug | "outros" {
+  const id = productId != null ? String(productId).trim() : "";
+  if (id) {
+    for (const p of HOTMART_PRODUCTS) {
+      if (p.hotmartIds.includes(id)) return p.slug;
+    }
+  }
+  const name = productName != null ? productName.trim().toLowerCase() : "";
+  if (name) {
+    for (const p of HOTMART_PRODUCTS) {
+      if (p.names.some((n) => n.toLowerCase() === name)) return p.slug;
+    }
+  }
+  return "outros";
+}

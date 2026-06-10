@@ -4,7 +4,7 @@ import { parsePurchasePayload } from "./parser";
 const samplePayload = {
   event: "PURCHASE_APPROVED",
   data: {
-    product: { id: 1234567, name: "Desafio 7 Dias Alzheimer" },
+    product: { id: 7523998, name: "Desafio O Bom do Alzheimer" },
     buyer: {
       name: "Maria Silva",
       email: "maria@example.com",
@@ -32,7 +32,7 @@ describe("parsePurchasePayload", () => {
     expect(result!.buyerPhoneE164).toBe("5511987654321");
     expect(result!.valueCents).toBe(19700);
     expect(result!.currency).toBe("BRL");
-    expect(result!.productNameRaw).toBe("Desafio 7 Dias Alzheimer");
+    expect(result!.productNameRaw).toBe("Desafio O Bom do Alzheimer");
     expect(result!.purchasedAt).toBeInstanceOf(Date);
   });
 
@@ -65,20 +65,44 @@ describe("parsePurchasePayload", () => {
     expect(result!.buyerPhoneE164).toBe("5511987654321");
   });
 
-  it("classifica produto via regex do products.ts (desafio)", () => {
+  it("classifica Desafio pelo id do produto", () => {
     const result = parsePurchasePayload(samplePayload);
     expect(result!.productSlug).toBe("desafio");
   });
 
-  it("classifica produto Guia", () => {
+  it("classifica Guia pelo id do produto", () => {
     const result = parsePurchasePayload({
       ...samplePayload,
       data: {
         ...samplePayload.data,
-        product: { id: 999, name: "Guia Completo do Alzheimer" },
+        product: { id: 6753137, name: "GUIA ALZHEIMER - O PRIMEIRO PASSO PARA CUIDAR" },
       },
     });
     expect(result!.productSlug).toBe("guia");
+  });
+
+  it("classifica por nome exato quando o id não vem no payload (histórico)", () => {
+    const result = parsePurchasePayload({
+      ...samplePayload,
+      data: {
+        ...samplePayload.data,
+        product: { name: "GUIA ALZHEIMER - O PRIMEIRO PASSO PARA CUIDAR" },
+      },
+    });
+    expect(result!.productSlug).toBe("guia");
+  });
+
+  it("NÃO confunde outros produtos que têm 'guia' no nome (regressão)", () => {
+    for (const name of [
+      "E-Book - Higiene do Sono - Guia prático para dormir melhor",
+      "GUIA DE VIAGEM - Para quem vai viajar com uma pessoa com Alzheimer ou outras demências",
+    ]) {
+      const result = parsePurchasePayload({
+        ...samplePayload,
+        data: { ...samplePayload.data, product: { name } },
+      });
+      expect(result!.productSlug).toBe("outros");
+    }
   });
 
   it("retorna 'outros' quando produto não casa", () => {

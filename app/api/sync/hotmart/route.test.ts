@@ -10,7 +10,7 @@ import { invalidateAccessTokenCache } from "@/lib/hotmart/oauth";
 const CRON = "test-cron-secret";
 
 const sampleItem = {
-  product: { name: "Desafio 7 Dias" },
+  product: { id: 7523998, name: "Desafio O Bom do Alzheimer" },
   buyer: {
     name: "João Histórico",
     email: "joao-hist@test.com",

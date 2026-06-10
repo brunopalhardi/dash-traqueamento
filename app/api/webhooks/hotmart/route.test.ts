@@ -9,7 +9,7 @@ const TOKEN = "test-hottok-123";
 const payload = {
   event: "PURCHASE_APPROVED",
   data: {
-    product: { name: "Desafio 7 Dias" },
+    product: { id: 7523998, name: "Desafio O Bom do Alzheimer" },
     buyer: {
       name: "João Teste",
       email: "joao@test.com",

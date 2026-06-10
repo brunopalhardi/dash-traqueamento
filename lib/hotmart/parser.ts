@@ -1,5 +1,5 @@
 import { normalizePhone } from "@/lib/utils/phone";
-import { PRODUCTS, type ProductSlug } from "@/lib/products";
+import { classifyPurchaseProduct, type ProductSlug } from "@/lib/products";
 
 export interface ParsedPurchase {
   event: "PURCHASE_APPROVED" | "PURCHASE_REFUNDED" | "PURCHASE_CHARGEBACK";
@@ -50,18 +50,6 @@ function toDate(v: unknown): Date {
   return new Date();
 }
 
-function detectProductByName(name: string | null): ProductSlug | "outros" {
-  if (!name) return "outros";
-  for (const p of PRODUCTS) {
-    if (p.slug === "geral") continue;
-    if (p.namePattern && p.namePattern.test(name)) return p.slug;
-  }
-  // Fallback: keywords explícitas
-  if (/desafio/i.test(name)) return "desafio";
-  if (/guia/i.test(name)) return "guia";
-  return "outros";
-}
-
 export function parsePurchasePayload(raw: unknown): ParsedPurchase | null {
   const root = asObj(raw);
   if (!root) return null;
@@ -83,6 +71,7 @@ export function parsePurchasePayload(raw: unknown): ParsedPurchase | null {
   if (!transactionId) return null;
 
   const productName = product ? pick<string>(product, ["name", "product_name"]) ?? null : null;
+  const productId = product ? pick<string | number>(product, ["id", "product_id"]) ?? null : null;
   const buyerName = buyer ? pick<string>(buyer, ["name", "buyer_name", "full_name"]) ?? null : null;
   const buyerEmail = buyer ? pick<string>(buyer, ["email", "buyer_email"]) ?? null : null;
   const buyerPhoneRaw = buyer
@@ -116,7 +105,7 @@ export function parsePurchasePayload(raw: unknown): ParsedPurchase | null {
     event,
     status: EVENT_TO_STATUS[event],
     transactionId: String(transactionId),
-    productSlug: detectProductByName(productName),
+    productSlug: classifyPurchaseProduct(productId != null ? String(productId) : null, productName),
     productNameRaw: productName,
     buyerName,
     buyerEmail,
