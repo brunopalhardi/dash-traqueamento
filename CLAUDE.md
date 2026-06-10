@@ -68,7 +68,7 @@ Dashboard focado em **Desafio + Guia**. Tudo de C1, Sono, Instagram e tracking-J
 
 - Meta Ads sync (Graph v25, cron diário 02h SP, reaper de jobs órfãos)
 - SendFlow webhook → tabelas `whatsapp_*` (entrada/saída de grupo)
-- Hotmart webhook → tabela `purchases` (PURCHASE_APPROVED/REFUNDED/CHARGEBACK, idempotente por `transaction_id`)
+- Hotmart webhook → tabela `purchases` (PURCHASE_APPROVED/REFUNDED/CHARGEBACK, idempotente por `transaction_id`). **Classificação de produto da compra** = `classifyPurchaseProduct()` em `lib/products.ts`, por **identidade do produto Hotmart** (registro `HOTMART_PRODUCTS`: id `6753137`/nome "GUIA ALZHEIMER - O PRIMEIRO PASSO PARA CUIDAR" → guia; id `7523998`/nome "Desafio O Bom do Alzheimer" → desafio; resto → outros). Id quando o payload traz (webhook v2); nome exato como fallback (sync via API só tem nome). **Pra adicionar produto, edite o registro lá.**
 - Match comprador↔grupo via `buyer_phone_e164 ↔ whatsapp_group_members.phone_normalized` (E.164 normalizado em ambos os lados via `lib/utils/phone.ts`)
 - **VTurb sync** (cron diário 08h UTC, `/api/sync/vturb`) → métricas de VSL por **página ativa do Guia**. 4 passos: catálogo de players → descobre páginas ativas (URLs de anúncios ACTIVE) → resolve player_id por **scrape do HTML** do embed (fallback manual em settings) → puxa métricas da Analytics API VTurb e faz upsert em 5 tabelas (`vturb_players/pages/page_players/page_daily/retention_daily`). Junta com gasto/venda do Meta por **URL normalizada**. Soma mobile+desktop e **recalcula taxas a partir do total** (não média de médias). Lógica pura testada em `lib/vturb/*`. Saúde da página (🟢 mapeado / 🟡 sem embed / 🔴 404) vira badge na tabela. Spec/plano: `docs/superpowers/{specs,plans}/2026-06-08-vturb-integration*.md`.
 
@@ -94,7 +94,7 @@ Dashboard focado em **Desafio + Guia**. Tudo de C1, Sono, Instagram e tracking-J
 
 ### Convenção de nomes de campanha (Meta) → atribuição por produto
 
-A atribuição de **gasto/tráfego** a cada produto é por **conta Meta + regex no nome da campanha** (`lib/products.ts`). Por isso a nomenclatura importa: se uma campanha não casa o regex, o gasto dela **some silenciosamente** do dashboard (mas a receita vem do Hotmart por `productSlug`, então fica descasado → ROAS fantasma). Convenção atual do Bruno:
+A atribuição de **gasto/tráfego** a cada produto é por **conta Meta + regex no nome da campanha** (`namePattern` em `lib/products.ts`). ⚠️ **Mecanismo distinto** da atribuição de **venda/receita**, que é por **produto Hotmart** (`classifyPurchaseProduct`/`HOTMART_PRODUCTS`, ver "Stack ativa"). Não confundir: regex de campanha ≠ identidade de produto. (Bug histórico 2026-06-09: a classificação de venda usava substring `/guia/i` no nome do produto, varrendo ebook de Sono + Guia de Viagem pro `/guia` e inflando ROAS — corrigido pra id+nome exato.) Por isso a nomenclatura importa: se uma campanha não casa o regex, o gasto dela **some silenciosamente** do dashboard (mas a receita vem do Hotmart por `productSlug`, então fica descasado → ROAS fantasma). Convenção atual do Bruno:
 
 - **Guia** (`act_972744231680763` — "CA01 - OBA - FUNIS"):
   - `B-PERPETUO-GA-…` — campanhas do Guia (`GA` = Guia do Alzheimer). Divididas por **grupo**: `B-PERPETUO-GA-GRUPO-EXAUSTÃO-A/B/C`. Hoje só existe o grupo **EXAUSTÃO**; futuramente entra **SONO** e outros (`-GRUPO-SONO-…`).
