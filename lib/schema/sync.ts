@@ -28,6 +28,7 @@ export const syncJobStatus = pgEnum("sync_job_status", [
   "queued",
   "running",
   "done",
+  "partial",
   "failed",
 ]);
 

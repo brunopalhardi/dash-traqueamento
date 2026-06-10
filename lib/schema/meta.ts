@@ -53,6 +53,11 @@ export const campaigns = pgTable(
     name: text("name").notNull(),
     objective: text("objective"),
     status: text("status").notNull(),
+    /**
+     * Slug do produto detectado no sync via detectProduct() — fonte única
+     * de atribuição campanha→produto. "outros" = não categorizado.
+     */
+    productSlug: text("product_slug"),
     dailyBudget: numeric("daily_budget", { precision: 14, scale: 2 }),
     lifetimeBudget: numeric("lifetime_budget", { precision: 14, scale: 2 }),
     startTime: timestamp("start_time", { withTimezone: true }),
@@ -67,6 +72,7 @@ export const campaigns = pgTable(
   (t) => [
     uniqueIndex("campaigns_meta_id_uq").on(t.metaId),
     index("campaigns_account_idx").on(t.adAccountId),
+    index("campaigns_product_slug_idx").on(t.productSlug),
   ],
 );
 

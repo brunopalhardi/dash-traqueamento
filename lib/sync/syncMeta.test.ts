@@ -1,10 +1,31 @@
 import { describe, it, expect } from "vitest";
-import { syncMeta, extractConversions } from "./syncMeta";
+import { syncMeta, extractConversions, computeSyncStatus } from "./syncMeta";
 import type { MetaInsight } from "../meta/types";
 
 describe("syncMeta", () => {
   it("exports a function", () => {
     expect(typeof syncMeta).toBe("function");
+  });
+});
+
+describe("computeSyncStatus", () => {
+  it("retorna 'partial' quando 1 conta falha e outra tem sucesso", () => {
+    // Antes esse cenário virava "done" silenciosamente, mentindo sobre o sucesso.
+    expect(
+      computeSyncStatus([{ error: "meta auth error" }, { error: undefined }]),
+    ).toBe("partial");
+  });
+
+  it("retorna 'failed' quando TODAS as contas falham", () => {
+    expect(computeSyncStatus([{ error: "x" }, { error: "y" }])).toBe("failed");
+  });
+
+  it("retorna 'done' quando nenhuma conta falha", () => {
+    expect(computeSyncStatus([{ error: undefined }, { error: undefined }])).toBe("done");
+  });
+
+  it("retorna 'done' quando não há contas (lista vazia)", () => {
+    expect(computeSyncStatus([])).toBe("done");
   });
 });
 

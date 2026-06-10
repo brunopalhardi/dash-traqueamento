@@ -15,6 +15,14 @@
     {
       "path": "/api/sync/vturb",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/sync/refresh-weekly",
+      "schedule": "0 7 * * 1"
+    },
+    {
+      "path": "/api/sync/refresh-today",
+      "schedule": "0 11,14,17,20,23 * * *"
     }
   ]
 }

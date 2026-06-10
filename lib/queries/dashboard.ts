@@ -1,8 +1,16 @@
-import { sql, and, gte, lte, eq, like, or, type SQL } from "drizzle-orm";
+import { sql, and, gte, lte, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { adInsightsDaily } from "@/lib/schema/insights";
 import { ads, adsets, campaigns, adAccounts, creatives } from "@/lib/schema/meta";
-import { detectProduct, getProduct, PRODUCTS, type Product, type ProductSlug } from "@/lib/products";
+import { getProduct, PRODUCTS, type ProductSlug } from "@/lib/products";
+import { productScopeWhere } from "./product-scope";
+import {
+  todayBR,
+  addDays as addDaysISO,
+  rangeLastDays as rangeLastDaysBR,
+  rangeLastFullDays as rangeLastFullDaysBR,
+  rangePreviousPeriod as rangePreviousPeriodBR,
+} from "@/lib/utils/date-ranges";
 
 export interface DateRange {
   /** ISO date YYYY-MM-DD inclusive */
@@ -125,35 +133,6 @@ function divSafe(a: number, b: number): number {
   return b === 0 ? 0 : a / b;
 }
 
-function productScopeWhere(product: Product): SQL[] {
-  const where: SQL[] = [];
-  if (product.metaAccountId) {
-    where.push(eq(adAccounts.metaAccountId, product.metaAccountId));
-  }
-  if (product.namePattern) {
-    // SQL ILIKE com wildcard derivado da regex (todas regex hoje são literais simples)
-    const tokens = extractAlternationTokens(product.namePattern);
-    if (tokens.length === 1) {
-      where.push(like(sql`upper(${campaigns.name})`, `%${tokens[0].toUpperCase()}%`));
-    } else if (tokens.length > 1) {
-      where.push(
-        or(...tokens.map((t) => like(sql`upper(${campaigns.name})`, `%${t.toUpperCase()}%`)))!,
-      );
-    }
-  }
-  return where;
-}
-
-/** Extrai alternativas literais de um RegExp. Funciona pros patterns do products.ts. */
-function extractAlternationTokens(re: RegExp): string[] {
-  const src = re.source;
-  // remove flags-irrelevant chars; só nos importam alternâncias literais
-  // ex.: "PERPETUO-SONO|PROTOCOLO.*SONO" → ["PERPETUO-SONO", "PROTOCOLO.*SONO"]
-  const parts = src.split("|").map((p) => p.replace(/^\\/, "").replace(/\$$/, ""));
-  // pega só a parte literal antes do primeiro metachar
-  return parts.map((p) => p.replace(/[.*+?(){}[\]\\^$|]/g, " ").trim()).filter(Boolean);
-}
-
 /* ─────────────────────────────────────────────────────────────────────── */
 
 export async function getKpis(slug: ProductSlug, range: DateRange): Promise<Kpis> {
@@ -254,8 +233,7 @@ export async function getDailySeries(slug: ProductSlug, range: DateRange): Promi
 export async function getProductBreakdown(range: DateRange): Promise<ProductBreakdownRow[]> {
   const rows = await db
     .select({
-      campaignName: campaigns.name,
-      metaAccountId: adAccounts.metaAccountId,
+      productSlug: campaigns.productSlug,
       spend: sql<number>`coalesce(sum(${adInsightsDaily.spend})::float, 0)`,
       leads: sql<number>`coalesce(sum((${adInsightsDaily.conversions}->>'lead')::float), 0)`,
       purchases: sql<number>`coalesce(sum((${adInsightsDaily.conversions}->>'purchase')::float), 0)`,
@@ -265,38 +243,29 @@ export async function getProductBreakdown(range: DateRange): Promise<ProductBrea
     .innerJoin(ads, eq(ads.id, adInsightsDaily.adId))
     .innerJoin(adsets, eq(adsets.id, ads.adsetId))
     .innerJoin(campaigns, eq(campaigns.id, adsets.campaignId))
-    .innerJoin(adAccounts, eq(adAccounts.id, campaigns.adAccountId))
     .where(and(gte(adInsightsDaily.date, range.from), lte(adInsightsDaily.date, range.to)))
-    .groupBy(campaigns.name, adAccounts.metaAccountId);
+    .groupBy(campaigns.productSlug);
 
-  const buckets = new Map<string, ProductBreakdownRow>();
   const labelOf = (slug: ProductSlug | "outros") =>
     slug === "outros"
       ? "Outros"
       : PRODUCTS.find((p) => p.slug === slug)?.shortLabel ?? slug;
 
+  const out: ProductBreakdownRow[] = [];
   for (const r of rows) {
-    const slug = detectProduct(r.campaignName, r.metaAccountId);
+    const slug = (r.productSlug ?? "outros") as ProductSlug | "outros";
     if (slug === "geral" || slug === "outros") continue;
-    const cur =
-      buckets.get(slug) ??
-      ({
-        productSlug: slug,
-        label: labelOf(slug),
-        spend: 0,
-        leads: 0,
-        purchases: 0,
-        revenue: 0,
-        roas: 0,
-      } as ProductBreakdownRow);
-    cur.spend += Number(r.spend);
-    cur.leads += Number(r.leads);
-    cur.purchases += Number(r.purchases);
-    cur.revenue += Number(r.revenue);
-    buckets.set(slug, cur);
+    out.push({
+      productSlug: slug,
+      label: labelOf(slug),
+      spend: Number(r.spend),
+      leads: Number(r.leads),
+      purchases: Number(r.purchases),
+      revenue: Number(r.revenue),
+      roas: divSafe(Number(r.revenue), Number(r.spend)),
+    });
   }
-  for (const v of buckets.values()) v.roas = divSafe(v.revenue, v.spend);
-  return [...buckets.values()].sort((a, b) => b.spend - a.spend);
+  return out.sort((a, b) => b.spend - a.spend);
 }
 
 /**
@@ -330,7 +299,7 @@ function addDays(d: Date, n: number): Date {
 }
 
 /**
- * Range "ciclo atual" = últimos `cycleDays` dias terminando hoje.
+ * Range "ciclo atual" = últimos `cycleDays` dias terminando hoje (fuso BR).
  * Se `customStart`+`customEnd` forem passados, ignora cycleDays e usa o intervalo direto.
  */
 export function rangeCurrentCycle(
@@ -338,20 +307,13 @@ export function rangeCurrentCycle(
   custom?: { start: string; end: string },
 ): DateRange {
   if (custom) return { from: custom.start, to: custom.end };
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const from = addDays(today, -(cycleDays - 1));
-  return { from: dateISO(from), to: dateISO(today) };
+  const today = todayBR();
+  return { from: addDaysISO(today, -(cycleDays - 1)), to: today };
 }
 
 /** Range do ciclo anterior (de mesmo tamanho) ao atual. */
 export function rangePreviousCycle(currentRange: DateRange): DateRange {
-  const fromCurr = new Date(currentRange.from + "T00:00:00");
-  const toCurr = new Date(currentRange.to + "T00:00:00");
-  const days = Math.round((toCurr.getTime() - fromCurr.getTime()) / 86400000) + 1;
-  const prevTo = addDays(fromCurr, -1);
-  const prevFrom = addDays(prevTo, -(days - 1));
-  return { from: dateISO(prevFrom), to: dateISO(prevTo) };
+  return rangePreviousPeriodBR(currentRange);
 }
 
 /**
@@ -372,8 +334,8 @@ export async function getCycleOverlay(
 ): Promise<CycleOverlayPoint[]> {
   const customDays = opts.custom
     ? Math.round(
-        (new Date(opts.custom.end + "T00:00:00").getTime() -
-          new Date(opts.custom.start + "T00:00:00").getTime()) /
+        (new Date(opts.custom.end + "T12:00:00Z").getTime() -
+          new Date(opts.custom.start + "T12:00:00Z").getTime()) /
           86400000,
       ) + 1
     : null;
@@ -384,7 +346,7 @@ export async function getCycleOverlay(
 
   // Range total: do início do ciclo mais antigo até o fim do ciclo atual
   const oldestStart = addDays(
-    new Date(current.from + "T00:00:00"),
+    new Date(current.from + "T12:00:00Z"),
     -cycleDays * cyclesBack,
   );
   const fullRange: DateRange = {
@@ -393,10 +355,10 @@ export async function getCycleOverlay(
   };
 
   const series = await getDailySeries(slug, fullRange);
-  const currentStart = new Date(current.from + "T00:00:00");
+  const currentStart = new Date(current.from + "T12:00:00Z");
 
   return series.map((p) => {
-    const d = new Date(p.date + "T00:00:00");
+    const d = new Date(p.date + "T12:00:00Z");
     const diffDays = Math.floor((currentStart.getTime() - d.getTime()) / 86400000);
     // ciclo 0 = atual; ciclo 1 = anterior; …
     const cycleOffset = diffDays < 0 ? 0 : Math.floor(diffDays / cycleDays) + (diffDays % cycleDays === 0 ? 0 : 0);
@@ -506,42 +468,22 @@ export async function getTopAds(
 }
 
 /* ─────────────────────────────────────────────────────────────────────── */
-// Helpers de range de datas (timezone SP simplificado)
+// Helpers de range — delegam pro lib/utils/date-ranges (fuso BR correto).
 
 export function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return todayBR();
 }
 
 export function rangeLastDays(days: number): DateRange {
-  const to = new Date();
-  const from = new Date();
-  from.setDate(to.getDate() - (days - 1));
-  return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) };
+  return rangeLastDaysBR(days);
+}
+
+export function rangeLastFullDays(days: number): DateRange {
+  return rangeLastFullDaysBR(days);
 }
 
 export function rangePreviousPeriod(range: DateRange): DateRange {
-  const from = new Date(range.from + "T00:00:00");
-  const to = new Date(range.to + "T00:00:00");
-  const days = Math.round((to.getTime() - from.getTime()) / 86400000) + 1;
-  const prevTo = new Date(from);
-  prevTo.setDate(from.getDate() - 1);
-  const prevFrom = new Date(prevTo);
-  prevFrom.setDate(prevTo.getDate() - (days - 1));
-  return {
-    from: prevFrom.toISOString().slice(0, 10),
-    to: prevTo.toISOString().slice(0, 10),
-  };
-}
-
-export function rangeCurrentWeek(): DateRange {
-  const today = new Date();
-  const dow = (today.getDay() + 6) % 7;
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - dow);
-  return {
-    from: monday.toISOString().slice(0, 10),
-    to: today.toISOString().slice(0, 10),
-  };
+  return rangePreviousPeriodBR(range);
 }
 
 /* ─────────────────────────────────────────────────────────────────────── */

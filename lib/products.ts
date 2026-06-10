@@ -1,11 +1,19 @@
 /**
- * Catálogo de produtos do Bruno (O Bom do Alzheimer).
+ * Lógica de catálogo de produtos (interface, getters, detecção por campanha).
+ *
+ * O CATÁLOGO em si (marca, produtos, contas Meta, regex, visual) vive em
+ * `lib/client-config.ts` — esse é o ÚNICO arquivo a editar ao clonar pra outro
+ * cliente. Aqui ficam só os tipos e as funções que consomem o catálogo.
  *
  * Cada dashboard filtra campanhas por: conta Meta + regex no nome da campanha.
- * Se a nomenclatura mudar, ajusta aqui — os dashes/queries/sidebar leem daqui.
+ * Se a nomenclatura mudar, ajusta em `client-config.ts` — dashes/queries/sidebar
+ * leem daqui.
  */
 
-export type ProductSlug = "geral" | "desafio" | "guia";
+import { CLIENT_PRODUCTS } from "@/lib/client-config";
+
+export type { ProductSlug } from "@/lib/client-config";
+import type { ProductSlug } from "@/lib/client-config";
 
 export interface Product {
   slug: ProductSlug;
@@ -20,44 +28,23 @@ export interface Product {
   accent: string;
   /** Default de período em dias (Desafio é tratado à parte) */
   defaultRangeDays: number;
+  /** Rota do dashboard do produto; null = sem página própria */
+  href: string | null;
+  /** Tag visual na home (ex.: "PERPÉTUO") */
+  tagLabel: string;
+  /** Classes Tailwind do card na home */
+  rail: string;
+  tagBg: string;
+  tagText: string;
+  /** Badge no item do sidebar (ex.: ATIVO) */
+  navBadge?: { text: string; tone: "good" | "warn" | "bad" };
+  /** Aparece na navegação? (produto pausado = false) */
+  showInNav: boolean;
+  /** Produto tem grupo WhatsApp (coluna "no grupo", painel SendFlow)? */
+  hasWhatsAppGroup: boolean;
 }
 
-export const PRODUCTS: Product[] = [
-  {
-    slug: "geral",
-    label: "Geral",
-    shortLabel: "Geral",
-    description: "Visão consolidada de Desafio e Guia",
-    metaAccountId: null,
-    namePattern: null,
-    accent: "violet-500",
-    defaultRangeDays: 7,
-  },
-  {
-    slug: "desafio",
-    label: "Desafio",
-    shortLabel: "Desafio",
-    description: "Vendas do desafio semanal (ciclo seg→dom)",
-    metaAccountId: "act_1394993860878989",
-    namePattern: /VENDAS-DESAFIO/i,
-    accent: "fuchsia-500",
-    defaultRangeDays: 7,
-  },
-  {
-    slug: "guia",
-    label: "Guia",
-    shortLabel: "Guia",
-    description: "Produto perpétuo, ticket maior",
-    metaAccountId: "act_972744231680763",
-    // Nomenclatura do Bruno: campanhas do Guia usam o prefixo PERPETUO-GA
-    // (GA = Guia do Alzheimer), divididas por grupo (ex.: -GRUPO-EXAUSTÃO-*),
-    // mais o remarketing PERPETUO-GUIA-F-*. NÃO inclui os posts [C1] do
-    // Instagram — esses caem como gasto geral no dash Geral.
-    namePattern: /PERPETUO-GA|PERPETUO-GUIA|GUIA.*OBA/i,
-    accent: "amber-500",
-    defaultRangeDays: 30,
-  },
-];
+export const PRODUCTS: Product[] = CLIENT_PRODUCTS;
 
 export function getProduct(slug: ProductSlug): Product {
   const p = PRODUCTS.find((x) => x.slug === slug);

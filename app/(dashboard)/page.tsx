@@ -3,7 +3,7 @@ import {
   getDailySeries,
   getKpis,
   getProductBreakdown,
-  rangeLastDays,
+  rangeLastFullDays,
   rangePreviousPeriod,
 } from "@/lib/queries/dashboard";
 import { ComboChart } from "@/components/dashboard/combo-chart";
@@ -11,53 +11,35 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { fmt } from "@/components/dashboard/format";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PageHeader } from "@/components/dashboard/page-header";
-import type { ProductSlug } from "@/lib/products";
+import { getApprovedPurchaseRevenue } from "@/lib/queries/purchases";
+import { PRODUCTS, type ProductSlug } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
 
 const DEFAULT_DAYS = 7;
 
-// Visual identity por produto na home
-const PRODUCT_VISUAL: Record<
-  ProductSlug | "outros",
-  { rail: string; tagBg: string; tagText: string; tagLabel: string; href: string | null }
-> = {
-  geral: {
-    rail: "bg-muted-foreground/30",
-    tagBg: "bg-muted",
-    tagText: "text-muted-foreground",
-    tagLabel: "GERAL",
-    href: null,
-  },
-  desafio: {
-    rail: "bg-pink-500",
-    tagBg: "bg-pink-500/15",
-    tagText: "text-pink-300",
-    tagLabel: "SEMANAL · DESATIVADO",
-    href: "/desafio",
-  },
-  guia: {
-    rail: "bg-purple-500",
-    tagBg: "bg-purple-500/15",
-    tagText: "text-purple-300",
-    tagLabel: "PERPÉTUO",
-    href: "/guia",
-  },
-  outros: {
-    rail: "bg-muted-foreground/30",
-    tagBg: "bg-muted",
-    tagText: "text-muted-foreground",
-    tagLabel: "OUTROS",
-    href: null,
-  },
+// Visual da categoria "outros" (campanhas não atribuídas a nenhum produto)
+const OUTROS_VISUAL = {
+  rail: "bg-muted-foreground/30",
+  tagBg: "bg-muted",
+  tagText: "text-muted-foreground",
+  tagLabel: "OUTROS",
+  href: null as string | null,
+  description: "campanhas não categorizadas",
 };
 
-const PRODUCT_DESC: Record<ProductSlug | "outros", string> = {
-  geral: "consolidado",
-  desafio: "vendas do desafio semanal · ciclo seg→dom",
-  guia: "produto perpétuo · ticket maior",
-  outros: "campanhas não categorizadas",
-};
+function visualOf(slug: ProductSlug | "outros") {
+  const p = PRODUCTS.find((x) => x.slug === slug);
+  if (!p) return OUTROS_VISUAL;
+  return {
+    rail: p.rail,
+    tagBg: p.tagBg,
+    tagText: p.tagText,
+    tagLabel: p.tagLabel,
+    href: p.href,
+    description: p.description,
+  };
+}
 
 function deltaFromKpis(curr: number, prev: number) {
   return fmt.delta(curr, prev);
@@ -70,7 +52,9 @@ export default async function GeralPage({
 }) {
   const sp = await searchParams;
   const days = Math.max(1, Math.min(180, Number(sp.range ?? DEFAULT_DAYS)));
-  const range = rangeLastDays(days);
+  // Dias COMPLETOS (termina ontem): o sync Meta nunca tem o dia corrente
+  // fechado, e o "últimos 7 dias" do Gerenciador também termina ontem.
+  const range = rangeLastFullDays(days);
   const prevRange = rangePreviousPeriod(range);
 
   const [kpis, prevKpis, daily, breakdown] = await Promise.all([
@@ -80,6 +64,19 @@ export default async function GeralPage({
     getProductBreakdown(range),
   ]);
 
+  // Receita Hotmart (fonte da verdade) — soma dos produtos com venda
+  const salesProducts = PRODUCTS.filter((p) => p.slug !== "geral");
+  const [hotCurr, hotPrev] = await Promise.all([
+    Promise.all(salesProducts.map((p) => getApprovedPurchaseRevenue(p.slug, range))),
+    Promise.all(salesProducts.map((p) => getApprovedPurchaseRevenue(p.slug, prevRange))),
+  ]);
+  const hotBySlug: Record<string, number> = {};
+  salesProducts.forEach((p, i) => (hotBySlug[p.slug] = hotCurr[i]));
+  const revenueHot = hotCurr.reduce((a, b) => a + b, 0);
+  const prevRevenueHot = hotPrev.reduce((a, b) => a + b, 0);
+  const roasReal = kpis.spend > 0 ? revenueHot / kpis.spend : 0;
+  const prevRoasReal = prevKpis.spend > 0 ? prevRevenueHot / prevKpis.spend : 0;
+
   const hasData = daily.length > 0;
   const maxProductSpend = Math.max(...breakdown.map((b) => b.spend), 1);
 
@@ -88,7 +85,7 @@ export default async function GeralPage({
       <PageHeader
         eyebrow="geral · consolidado"
         title="Visão Geral"
-        subtitle={`últimos ${days} dias · investimento e ROAS consolidados de todos os produtos`}
+        subtitle={`últimos ${days} dias completos (até ontem) · investimento e ROAS consolidados de todos os produtos`}
         rangeDays={DEFAULT_DAYS}
       />
 
@@ -100,21 +97,22 @@ export default async function GeralPage({
           invertDelta
         />
         <KpiCard
-          label="Receita (Pixel)"
-          value={fmt.money(kpis.revenue)}
-          delta={deltaFromKpis(kpis.revenue, prevKpis.revenue)}
+          label="Receita (Hotmart)"
+          value={fmt.money(revenueHot)}
+          delta={deltaFromKpis(revenueHot, prevRevenueHot)}
+          hint={`pixel meta: ${fmt.money(kpis.revenue)}`}
         />
         <KpiCard
           label="ROAS"
-          value={fmt.ratio(kpis.roas)}
-          delta={deltaFromKpis(kpis.roas, prevKpis.roas)}
-          hint={`vs ${fmt.ratio(prevKpis.roas)} anterior`}
+          value={fmt.ratio(roasReal)}
+          delta={deltaFromKpis(roasReal, prevRoasReal)}
+          hint={`receita Hotmart ÷ gasto Meta · vs ${fmt.ratio(prevRoasReal)} anterior`}
           tone={
-            kpis.roas >= 2
+            roasReal >= 2
               ? "good"
-              : kpis.roas >= 1
+              : roasReal >= 1
                 ? "warn"
-                : kpis.roas > 0
+                : roasReal > 0
                   ? "bad"
                   : "neutral"
           }
@@ -137,11 +135,11 @@ export default async function GeralPage({
           <div className="flex items-center gap-6 sm:gap-8 flex-wrap">
             <Stat label="Investimento total" value={fmt.money(kpis.spend)} />
             <Stat
-              label="Receita total"
-              value={fmt.money(kpis.revenue)}
-              tone={kpis.revenue >= kpis.spend ? "good" : "bad"}
+              label="Receita Hotmart"
+              value={fmt.money(revenueHot)}
+              tone={revenueHot >= kpis.spend ? "good" : "bad"}
             />
-            <Stat label="ROAS médio" value={fmt.ratio(kpis.roas)} />
+            <Stat label="ROAS real" value={fmt.ratio(roasReal)} />
           </div>
           <div className="font-mono text-[10px] tracking-wide text-muted-foreground/60 lowercase">
             investimento × receita / dia
@@ -162,7 +160,7 @@ export default async function GeralPage({
               },
               {
                 key: "revenue",
-                label: "receita",
+                label: "receita (pixel)",
                 type: "line",
                 color: "#34d399",
                 format: "money",
@@ -191,15 +189,17 @@ export default async function GeralPage({
         <section className="space-y-3">
           {breakdown.map((p) => {
             const slug = p.productSlug;
-            const visual = PRODUCT_VISUAL[slug] ?? PRODUCT_VISUAL.outros;
-            const desc = PRODUCT_DESC[slug] ?? "";
+            const hotRevenue = hotBySlug[slug] ?? 0;
+            const roasHot = p.spend > 0 ? hotRevenue / p.spend : 0;
+            const visual = visualOf(slug);
+            const desc = visual.description;
             const spendPct = Math.min(100, (p.spend / maxProductSpend) * 100);
             const roasTone =
-              p.roas >= 2
+              roasHot >= 2
                 ? "text-emerald-400"
-                : p.roas >= 1
+                : roasHot >= 1
                   ? "text-amber-400"
-                  : p.roas > 0
+                  : roasHot > 0
                     ? "text-rose-400"
                     : "text-muted-foreground";
             const isDesafio = slug === "desafio";
@@ -231,13 +231,13 @@ export default async function GeralPage({
                   <Stat label="Vendas" value={fmt.int(p.purchases)} />
                   <Stat label="Leads" value={fmt.int(p.leads)} />
                   <Stat
-                    label="Receita"
-                    value={fmt.money(p.revenue)}
-                    tone={p.revenue > 0 ? "good" : undefined}
+                    label="Receita (Hotmart)"
+                    value={fmt.money(hotRevenue)}
+                    tone={hotRevenue > 0 ? "good" : undefined}
                   />
                   <Stat
                     label="ROAS"
-                    value={fmt.ratio(p.roas)}
+                    value={fmt.ratio(roasHot)}
                     valueClassName={roasTone}
                   />
                 </div>

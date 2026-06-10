@@ -7,6 +7,7 @@ import type { MetaClient } from "@/lib/meta/client";
 import type { DatePreset, MetaCreative, MetaInsight, MetaInsightAction } from "@/lib/meta/types";
 import { extractLandingUrl } from "@/lib/meta/extractors";
 import { MetaAuthError } from "@/lib/meta/errors";
+import { detectProduct } from "@/lib/products";
 
 /**
  * Job órfão = "running" há mais que ORPHAN_THRESHOLD_MS. O Vercel mata a função
@@ -29,11 +30,16 @@ export async function reapOrphanJobs(db: typeof defaultDb = defaultDb): Promise<
   return reaped.map((r) => r.id);
 }
 
-export type SyncMode = "backfill" | "daily" | "manual";
+export type SyncMode = "backfill" | "daily" | "weekly" | "today" | "manual";
 
 const MODE_TO_PRESET: Record<SyncMode, DatePreset> = {
   backfill: "last_30d",
   daily: "last_7d",
+  // weekly recaptura a reatribuição retroativa do Meta (janela de até 28d)
+  weekly: "last_28d",
+  // today = parcial do dia corrente (os presets last_Nd EXCLUEM hoje);
+  // roda intradiário via cron pra "esta semana"/"hoje" não ficarem zerados
+  today: "today",
   manual: "last_30d",
 };
 
@@ -180,9 +186,23 @@ export function extractConversions(insight: MetaInsight): AdConversions {
   };
 }
 
+/**
+ * Deriva o status do job a partir dos resultados por conta.
+ * - failed: TODAS as contas falharam
+ * - partial: pelo menos 1 falhou mas não todas (antes fingia "done")
+ * - done: nenhuma falhou
+ */
+export function computeSyncStatus(
+  results: Pick<AccountSyncResult, "error">[],
+): "done" | "failed" | "partial" {
+  const anyFailed = results.some((r) => r.error);
+  const allFailed = results.length > 0 && results.every((r) => r.error);
+  return allFailed ? "failed" : anyFailed ? "partial" : "done";
+}
+
 export async function syncMeta(
   opts: { mode: SyncMode } & SyncMetaDeps,
-): Promise<{ jobId: number; status: "done" | "failed"; results: AccountSyncResult[] }> {
+): Promise<{ jobId: number; status: "done" | "failed" | "partial"; results: AccountSyncResult[] }> {
   const db = opts.db ?? defaultDb;
   const preset = MODE_TO_PRESET[opts.mode];
   const jobType = opts.mode === "backfill" ? "meta_full" : "meta_incremental";
@@ -224,6 +244,7 @@ export async function syncMeta(
             name: c.name,
             objective: c.objective,
             status: c.status,
+            productSlug: detectProduct(c.name, actId),
             dailyBudget: c.daily_budget ?? null,
             lifetimeBudget: c.lifetime_budget ?? null,
             startTime: c.start_time ? new Date(c.start_time) : null,
@@ -235,6 +256,7 @@ export async function syncMeta(
               name: c.name,
               objective: c.objective,
               status: c.status,
+              productSlug: detectProduct(c.name, actId),
               dailyBudget: c.daily_budget ?? null,
               lifetimeBudget: c.lifetime_budget ?? null,
               startTime: c.start_time ? new Date(c.start_time) : null,
@@ -495,8 +517,7 @@ export async function syncMeta(
     0,
   );
   const anyFailed = results.some((r) => r.error);
-  const allFailed = results.length > 0 && results.every((r) => r.error);
-  const status: "done" | "failed" = allFailed ? "failed" : "done";
+  const status = computeSyncStatus(results);
 
   // Concatena os erros reais por account no errorMessage — antes era só
   // "see details" e não tinha onde ver os details na UI.

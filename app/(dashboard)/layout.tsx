@@ -32,7 +32,7 @@ export default async function DashboardLayout({
 
   const lastSync = last
     ? {
-        status: last.status as "done" | "failed" | "running",
+        status: last.status as "done" | "failed" | "running" | "partial",
         finishedAt: last.finishedAt ?? last.createdAt,
       }
     : null;

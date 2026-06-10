@@ -1,4 +1,4 @@
-import { and, eq, gte, like, lte, or, sql, type SQL, desc } from "drizzle-orm";
+import { and, eq, gte, lte, sql, type SQL, desc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   adAccounts,
@@ -8,38 +8,9 @@ import {
   campaigns,
   creatives,
 } from "@/lib/schema";
-import { getProduct, type Product, type ProductSlug } from "@/lib/products";
+import { getProduct, type ProductSlug } from "@/lib/products";
+import { productScopeWhere } from "./product-scope";
 import type { DateRange } from "./dashboard";
-
-/* ─── product scope (replicado de dashboard.ts para evitar export interno) ── */
-
-function extractAlternationTokens(re: RegExp): string[] {
-  const src = re.source;
-  const parts = src.split("|").map((p) => p.replace(/^\\/, "").replace(/\$$/, ""));
-  return parts
-    .map((p) => p.replace(/[.*+?(){}[\]\\^$|]/g, " ").trim())
-    .filter(Boolean);
-}
-
-function productScopeWhere(product: Product): SQL[] {
-  const where: SQL[] = [];
-  if (product.metaAccountId) {
-    where.push(eq(adAccounts.metaAccountId, product.metaAccountId));
-  }
-  if (product.namePattern) {
-    const tokens = extractAlternationTokens(product.namePattern);
-    if (tokens.length === 1) {
-      where.push(like(sql`upper(${campaigns.name})`, `%${tokens[0].toUpperCase()}%`));
-    } else if (tokens.length > 1) {
-      where.push(
-        or(
-          ...tokens.map((t) => like(sql`upper(${campaigns.name})`, `%${t.toUpperCase()}%`)),
-        )!,
-      );
-    }
-  }
-  return where;
-}
 
 export interface FunnelOptions {
   /** Quando true, retorna só itens cujo ad/adset/campaign estão ACTIVE no Meta */

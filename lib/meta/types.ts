@@ -146,4 +146,4 @@ export interface MetaInsight {
   action_values?: MetaInsightAction[];
 }
 
-export type DatePreset = "yesterday" | "last_3d" | "last_7d" | "last_30d";
+export type DatePreset = "today" | "yesterday" | "last_3d" | "last_7d" | "last_28d" | "last_30d";
