@@ -54,6 +54,16 @@ Dashboard próprio de tráfego pago + vendas, inspirado no **VK Metrics** (vkmet
 
 Dashboard focado em **Desafio + Guia**. Tudo de C1, Sono, Instagram e tracking-JS foi removido na poda 2026-05-17 (spec/plano: `docs/superpowers/specs/2026-05-17-poda-foco-desafio-guia-design.md`, `docs/superpowers/plans/2026-05-17-poda-foco-desafio-guia.md`).
 
+### Clonar pra novo cliente (estratégia atual: 1 repo fork + 1 Supabase por cliente)
+
+1. Fork/clone do repo + novo projeto Vercel + novo Supabase (rodar migrations: `npm run db:migrate`)
+2. Editar **`lib/client-config.ts`** (único arquivo de código): BRAND, produtos, contas Meta (`act_…`), regex de nomenclatura de campanha, rotas/visual
+3. Criar as rotas de produto (`app/(dashboard)/<slug>/page.tsx`) espelhando `/guia` — ainda não são dinâmicas
+4. Preencher TODAS as vars do `.env.example` na Vercel
+5. Cadastrar webhooks no painel do cliente: Hotmart (`/api/webhooks/hotmart`, eventos PURCHASE_APPROVED/REFUNDED/CHARGEBACK) e SendFlow (`/api/webhooks/sendflow?token=…`)
+6. Ativar contas Meta em `/settings/integrations` e rodar `/api/sync/refresh?mode=backfill`
+7. Validar: gasto por produto vs Gerenciador de Anúncios, receita vs painel Hotmart, `scripts/diag-guia-spend.ts` adaptado
+
 ### Rotas vivas
 
 - `/` — Visão Geral consolidada (Desafio + Guia)

@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, BookOpen, Settings, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VERSION, COMMIT_SHA } from "@/lib/version";
+import { BRAND } from "@/lib/client-config";
+import { PRODUCTS } from "@/lib/products";
 
 interface NavItem {
   href: string;
@@ -25,7 +27,13 @@ const SECTIONS: NavSection[] = [
     title: "Dashboards",
     items: [
       { href: "/", label: "Visão Geral", icon: LayoutDashboard },
-      { href: "/guia", label: "Guia", icon: BookOpen, badge: "ATIVO", badgeTone: "good" },
+      ...PRODUCTS.filter((p) => p.showInNav && p.href).map((p) => ({
+        href: p.href!,
+        label: p.label,
+        icon: BookOpen,
+        badge: p.navBadge?.text,
+        badgeTone: p.navBadge?.tone,
+      })),
     ],
   },
   {
@@ -106,14 +114,14 @@ export function Sidebar({ lastSync }: SidebarProps = {}) {
                 "linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)",
             }}
           >
-            <span className="font-mono text-[10px] font-bold tracking-tight">OBA</span>
+            <span className="font-mono text-[10px] font-bold tracking-tight">{BRAND.initials}</span>
           </div>
           <div className="min-w-0">
             <div className="font-medium text-[13px] leading-none tracking-tight">
-              Traqueamento
+              {BRAND.name}
             </div>
             <div className="font-mono text-[10px] tracking-wide text-muted-foreground/60 lowercase mt-1">
-              tráfego pago + vendas
+              {BRAND.subtitle}
             </div>
           </div>
         </div>

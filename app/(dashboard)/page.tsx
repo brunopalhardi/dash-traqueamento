@@ -18,47 +18,28 @@ export const dynamic = "force-dynamic";
 
 const DEFAULT_DAYS = 7;
 
-// Visual identity por produto na home
-const PRODUCT_VISUAL: Record<
-  ProductSlug | "outros",
-  { rail: string; tagBg: string; tagText: string; tagLabel: string; href: string | null }
-> = {
-  geral: {
-    rail: "bg-muted-foreground/30",
-    tagBg: "bg-muted",
-    tagText: "text-muted-foreground",
-    tagLabel: "GERAL",
-    href: null,
-  },
-  desafio: {
-    rail: "bg-pink-500",
-    tagBg: "bg-pink-500/15",
-    tagText: "text-pink-300",
-    tagLabel: "SEMANAL · DESATIVADO",
-    href: "/desafio",
-  },
-  guia: {
-    rail: "bg-purple-500",
-    tagBg: "bg-purple-500/15",
-    tagText: "text-purple-300",
-    tagLabel: "PERPÉTUO",
-    href: "/guia",
-  },
-  outros: {
-    rail: "bg-muted-foreground/30",
-    tagBg: "bg-muted",
-    tagText: "text-muted-foreground",
-    tagLabel: "OUTROS",
-    href: null,
-  },
+// Visual da categoria "outros" (campanhas não atribuídas a nenhum produto)
+const OUTROS_VISUAL = {
+  rail: "bg-muted-foreground/30",
+  tagBg: "bg-muted",
+  tagText: "text-muted-foreground",
+  tagLabel: "OUTROS",
+  href: null as string | null,
+  description: "campanhas não categorizadas",
 };
 
-const PRODUCT_DESC: Record<ProductSlug | "outros", string> = {
-  geral: "consolidado",
-  desafio: "vendas do desafio semanal · ciclo seg→dom",
-  guia: "produto perpétuo · ticket maior",
-  outros: "campanhas não categorizadas",
-};
+function visualOf(slug: ProductSlug | "outros") {
+  const p = PRODUCTS.find((x) => x.slug === slug);
+  if (!p) return OUTROS_VISUAL;
+  return {
+    rail: p.rail,
+    tagBg: p.tagBg,
+    tagText: p.tagText,
+    tagLabel: p.tagLabel,
+    href: p.href,
+    description: p.description,
+  };
+}
 
 function deltaFromKpis(curr: number, prev: number) {
   return fmt.delta(curr, prev);
@@ -208,8 +189,8 @@ export default async function GeralPage({
             const slug = p.productSlug;
             const hotRevenue = hotBySlug[slug] ?? 0;
             const roasHot = p.spend > 0 ? hotRevenue / p.spend : 0;
-            const visual = PRODUCT_VISUAL[slug] ?? PRODUCT_VISUAL.outros;
-            const desc = PRODUCT_DESC[slug] ?? "";
+            const visual = visualOf(slug);
+            const desc = visual.description;
             const spendPct = Math.min(100, (p.spend / maxProductSpend) * 100);
             const roasTone =
               roasHot >= 2
