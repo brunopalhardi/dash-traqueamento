@@ -54,6 +54,17 @@ export function rangeLastDays(days: number, today = todayBR()): DateRange {
   return { from: addDays(today, -(days - 1)), to: today };
 }
 
+/**
+ * Últimos N dias COMPLETOS — termina ONTEM, não hoje.
+ * O sync do Meta usa presets last_Nd que excluem o dia corrente, então o banco
+ * nunca tem "hoje" fechado; janela até ontem bate 1:1 com o "últimos 7 dias"
+ * do Gerenciador de Anúncios (que também termina ontem).
+ */
+export function rangeLastFullDays(days: number, today = todayBR()): DateRange {
+  const yesterday = addDays(today, -1);
+  return { from: addDays(yesterday, -(days - 1)), to: yesterday };
+}
+
 /** Período imediatamente anterior, de mesmo tamanho, sem overlap. */
 export function rangePreviousPeriod(range: DateRange): DateRange {
   const days = diffDays(range.from, range.to) + 1;

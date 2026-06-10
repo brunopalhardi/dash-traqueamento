@@ -3,6 +3,7 @@ import {
   addDays,
   diffDays,
   rangeLastDays,
+  rangeLastFullDays,
   rangePreviousPeriod,
 } from "./date-ranges";
 
@@ -26,6 +27,18 @@ describe("rangeLastDays", () => {
   });
   it("cruza virada de mês sem off-by-one", () => {
     expect(rangeLastDays(7, "2026-06-03")).toEqual({ from: "2026-05-28", to: "2026-06-03" });
+  });
+});
+
+describe("rangeLastFullDays", () => {
+  it("termina ONTEM com N dias completos (bate com Gerenciador)", () => {
+    expect(rangeLastFullDays(7, "2026-06-10")).toEqual({ from: "2026-06-03", to: "2026-06-09" });
+  });
+  it("1 dia completo = só ontem", () => {
+    expect(rangeLastFullDays(1, "2026-06-10")).toEqual({ from: "2026-06-09", to: "2026-06-09" });
+  });
+  it("cruza virada de mês", () => {
+    expect(rangeLastFullDays(7, "2026-06-03")).toEqual({ from: "2026-05-27", to: "2026-06-02" });
   });
 });
 

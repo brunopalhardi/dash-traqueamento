@@ -3,7 +3,7 @@ import {
   getDailySeries,
   getKpis,
   getProductBreakdown,
-  rangeLastDays,
+  rangeLastFullDays,
   rangePreviousPeriod,
 } from "@/lib/queries/dashboard";
 import { ComboChart } from "@/components/dashboard/combo-chart";
@@ -52,7 +52,9 @@ export default async function GeralPage({
 }) {
   const sp = await searchParams;
   const days = Math.max(1, Math.min(180, Number(sp.range ?? DEFAULT_DAYS)));
-  const range = rangeLastDays(days);
+  // Dias COMPLETOS (termina ontem): o sync Meta nunca tem o dia corrente
+  // fechado, e o "últimos 7 dias" do Gerenciador também termina ontem.
+  const range = rangeLastFullDays(days);
   const prevRange = rangePreviousPeriod(range);
 
   const [kpis, prevKpis, daily, breakdown] = await Promise.all([
@@ -83,7 +85,7 @@ export default async function GeralPage({
       <PageHeader
         eyebrow="geral · consolidado"
         title="Visão Geral"
-        subtitle={`últimos ${days} dias · investimento e ROAS consolidados de todos os produtos`}
+        subtitle={`últimos ${days} dias completos (até ontem) · investimento e ROAS consolidados de todos os produtos`}
         rangeDays={DEFAULT_DAYS}
       />
 

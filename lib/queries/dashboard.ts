@@ -8,6 +8,7 @@ import {
   todayBR,
   addDays as addDaysISO,
   rangeLastDays as rangeLastDaysBR,
+  rangeLastFullDays as rangeLastFullDaysBR,
   rangePreviousPeriod as rangePreviousPeriodBR,
 } from "@/lib/utils/date-ranges";
 
@@ -475,6 +476,10 @@ export function todayISO(): string {
 
 export function rangeLastDays(days: number): DateRange {
   return rangeLastDaysBR(days);
+}
+
+export function rangeLastFullDays(days: number): DateRange {
+  return rangeLastFullDaysBR(days);
 }
 
 export function rangePreviousPeriod(range: DateRange): DateRange {
