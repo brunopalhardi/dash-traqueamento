@@ -7,6 +7,7 @@ import type { MetaClient } from "@/lib/meta/client";
 import type { DatePreset, MetaCreative, MetaInsight, MetaInsightAction } from "@/lib/meta/types";
 import { extractLandingUrl } from "@/lib/meta/extractors";
 import { MetaAuthError } from "@/lib/meta/errors";
+import { detectProduct } from "@/lib/products";
 
 /**
  * Job órfão = "running" há mais que ORPHAN_THRESHOLD_MS. O Vercel mata a função
@@ -224,6 +225,7 @@ export async function syncMeta(
             name: c.name,
             objective: c.objective,
             status: c.status,
+            productSlug: detectProduct(c.name, actId),
             dailyBudget: c.daily_budget ?? null,
             lifetimeBudget: c.lifetime_budget ?? null,
             startTime: c.start_time ? new Date(c.start_time) : null,
@@ -235,6 +237,7 @@ export async function syncMeta(
               name: c.name,
               objective: c.objective,
               status: c.status,
+              productSlug: detectProduct(c.name, actId),
               dailyBudget: c.daily_budget ?? null,
               lifetimeBudget: c.lifetime_budget ?? null,
               startTime: c.start_time ? new Date(c.start_time) : null,

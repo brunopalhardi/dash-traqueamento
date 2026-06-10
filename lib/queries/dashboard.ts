@@ -1,8 +1,9 @@
-import { sql, and, gte, lte, eq, like, or, type SQL } from "drizzle-orm";
+import { sql, and, gte, lte, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { adInsightsDaily } from "@/lib/schema/insights";
 import { ads, adsets, campaigns, adAccounts, creatives } from "@/lib/schema/meta";
-import { detectProduct, getProduct, PRODUCTS, type Product, type ProductSlug } from "@/lib/products";
+import { getProduct, PRODUCTS, type ProductSlug } from "@/lib/products";
+import { productScopeWhere } from "./product-scope";
 import {
   todayBR,
   addDays as addDaysISO,
@@ -131,35 +132,6 @@ function divSafe(a: number, b: number): number {
   return b === 0 ? 0 : a / b;
 }
 
-function productScopeWhere(product: Product): SQL[] {
-  const where: SQL[] = [];
-  if (product.metaAccountId) {
-    where.push(eq(adAccounts.metaAccountId, product.metaAccountId));
-  }
-  if (product.namePattern) {
-    // SQL ILIKE com wildcard derivado da regex (todas regex hoje são literais simples)
-    const tokens = extractAlternationTokens(product.namePattern);
-    if (tokens.length === 1) {
-      where.push(like(sql`upper(${campaigns.name})`, `%${tokens[0].toUpperCase()}%`));
-    } else if (tokens.length > 1) {
-      where.push(
-        or(...tokens.map((t) => like(sql`upper(${campaigns.name})`, `%${t.toUpperCase()}%`)))!,
-      );
-    }
-  }
-  return where;
-}
-
-/** Extrai alternativas literais de um RegExp. Funciona pros patterns do products.ts. */
-function extractAlternationTokens(re: RegExp): string[] {
-  const src = re.source;
-  // remove flags-irrelevant chars; só nos importam alternâncias literais
-  // ex.: "PERPETUO-SONO|PROTOCOLO.*SONO" → ["PERPETUO-SONO", "PROTOCOLO.*SONO"]
-  const parts = src.split("|").map((p) => p.replace(/^\\/, "").replace(/\$$/, ""));
-  // pega só a parte literal antes do primeiro metachar
-  return parts.map((p) => p.replace(/[.*+?(){}[\]\\^$|]/g, " ").trim()).filter(Boolean);
-}
-
 /* ─────────────────────────────────────────────────────────────────────── */
 
 export async function getKpis(slug: ProductSlug, range: DateRange): Promise<Kpis> {
@@ -260,8 +232,7 @@ export async function getDailySeries(slug: ProductSlug, range: DateRange): Promi
 export async function getProductBreakdown(range: DateRange): Promise<ProductBreakdownRow[]> {
   const rows = await db
     .select({
-      campaignName: campaigns.name,
-      metaAccountId: adAccounts.metaAccountId,
+      productSlug: campaigns.productSlug,
       spend: sql<number>`coalesce(sum(${adInsightsDaily.spend})::float, 0)`,
       leads: sql<number>`coalesce(sum((${adInsightsDaily.conversions}->>'lead')::float), 0)`,
       purchases: sql<number>`coalesce(sum((${adInsightsDaily.conversions}->>'purchase')::float), 0)`,
@@ -271,38 +242,29 @@ export async function getProductBreakdown(range: DateRange): Promise<ProductBrea
     .innerJoin(ads, eq(ads.id, adInsightsDaily.adId))
     .innerJoin(adsets, eq(adsets.id, ads.adsetId))
     .innerJoin(campaigns, eq(campaigns.id, adsets.campaignId))
-    .innerJoin(adAccounts, eq(adAccounts.id, campaigns.adAccountId))
     .where(and(gte(adInsightsDaily.date, range.from), lte(adInsightsDaily.date, range.to)))
-    .groupBy(campaigns.name, adAccounts.metaAccountId);
+    .groupBy(campaigns.productSlug);
 
-  const buckets = new Map<string, ProductBreakdownRow>();
   const labelOf = (slug: ProductSlug | "outros") =>
     slug === "outros"
       ? "Outros"
       : PRODUCTS.find((p) => p.slug === slug)?.shortLabel ?? slug;
 
+  const out: ProductBreakdownRow[] = [];
   for (const r of rows) {
-    const slug = detectProduct(r.campaignName, r.metaAccountId);
+    const slug = (r.productSlug ?? "outros") as ProductSlug | "outros";
     if (slug === "geral" || slug === "outros") continue;
-    const cur =
-      buckets.get(slug) ??
-      ({
-        productSlug: slug,
-        label: labelOf(slug),
-        spend: 0,
-        leads: 0,
-        purchases: 0,
-        revenue: 0,
-        roas: 0,
-      } as ProductBreakdownRow);
-    cur.spend += Number(r.spend);
-    cur.leads += Number(r.leads);
-    cur.purchases += Number(r.purchases);
-    cur.revenue += Number(r.revenue);
-    buckets.set(slug, cur);
+    out.push({
+      productSlug: slug,
+      label: labelOf(slug),
+      spend: Number(r.spend),
+      leads: Number(r.leads),
+      purchases: Number(r.purchases),
+      revenue: Number(r.revenue),
+      roas: divSafe(Number(r.revenue), Number(r.spend)),
+    });
   }
-  for (const v of buckets.values()) v.roas = divSafe(v.revenue, v.spend);
-  return [...buckets.values()].sort((a, b) => b.spend - a.spend);
+  return out.sort((a, b) => b.spend - a.spend);
 }
 
 /**
