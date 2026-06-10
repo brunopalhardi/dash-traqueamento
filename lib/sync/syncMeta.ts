@@ -30,13 +30,16 @@ export async function reapOrphanJobs(db: typeof defaultDb = defaultDb): Promise<
   return reaped.map((r) => r.id);
 }
 
-export type SyncMode = "backfill" | "daily" | "weekly" | "manual";
+export type SyncMode = "backfill" | "daily" | "weekly" | "today" | "manual";
 
 const MODE_TO_PRESET: Record<SyncMode, DatePreset> = {
   backfill: "last_30d",
   daily: "last_7d",
   // weekly recaptura a reatribuição retroativa do Meta (janela de até 28d)
   weekly: "last_28d",
+  // today = parcial do dia corrente (os presets last_Nd EXCLUEM hoje);
+  // roda intradiário via cron pra "esta semana"/"hoje" não ficarem zerados
+  today: "today",
   manual: "last_30d",
 };
 

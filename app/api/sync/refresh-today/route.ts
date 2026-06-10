@@ -1,24 +1,24 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createMetaClient } from "@/lib/meta/client";
-import { syncMeta, type SyncMode } from "@/lib/sync/syncMeta";
+import { syncMeta } from "@/lib/sync/syncMeta";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
+
+// Sync intradiário do dia corrente (date_preset=today). Os presets last_Nd
+// do Meta EXCLUEM hoje, então sem esta rota o banco só tem dados até ontem
+// e janelas tipo "esta semana" mostram o dia corrente zerado.
 
 async function isAuthorized(req: NextRequest): Promise<boolean> {
   const auth = req.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
   if (cronSecret && auth === `Bearer ${cronSecret}`) return true;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   return !!user;
-}
-
-function parseMode(req: NextRequest): SyncMode {
-  const v = req.nextUrl.searchParams.get("mode");
-  if (v === "backfill" || v === "manual" || v === "daily" || v === "weekly" || v === "today") return v;
-  return "daily";
 }
 
 export async function POST(req: NextRequest) {
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     token,
     graphVersion: process.env.META_GRAPH_VERSION,
   });
-  const result = await syncMeta({ mode: parseMode(req), client });
+  const result = await syncMeta({ mode: "today", client });
   return NextResponse.json(result);
 }
 
