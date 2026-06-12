@@ -120,6 +120,13 @@
       "when": 1781128748111,
       "tag": "0016_precisao_product_slug_e_partial",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1781275606145,
+      "tag": "0017_purchases_tracking",
+      "breakpoints": true
     }
   ]
 }

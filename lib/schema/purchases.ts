@@ -34,6 +34,16 @@ export const purchases = pgTable(
     currency: text("currency"),
     purchasedAt: timestamp("purchased_at", { withTimezone: true }).notNull(),
     rawPayload: jsonb("raw_payload").notNull(),
+    /** Classificação da origem: trafego | organico | sem_atribuicao (lib/hotmart/tracking.ts) */
+    trafficSource: text("traffic_source"),
+    utmSource: text("utm_source"),
+    utmMedium: text("utm_medium"),
+    utmCampaign: text("utm_campaign"),
+    utmContent: text("utm_content"),
+    /** ad id do Meta vindo do xcod.vid (liga venda → anúncio → campanha) */
+    adExternalId: text("ad_external_id"),
+    /** sck cru pra auditoria/reclassificação */
+    trackingRaw: text("tracking_raw"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -46,5 +56,7 @@ export const purchases = pgTable(
     index("purchases_phone_idx").on(t.buyerPhoneE164),
     index("purchases_product_date_idx").on(t.productSlug, t.purchasedAt),
     index("purchases_status_idx").on(t.status),
+    index("purchases_traffic_source_idx").on(t.productSlug, t.trafficSource),
+    index("purchases_utm_campaign_idx").on(t.utmCampaign),
   ],
 );
