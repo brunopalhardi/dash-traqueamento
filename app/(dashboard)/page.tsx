@@ -207,13 +207,11 @@ export default async function GeralPage({
                   : roasHot > 0
                     ? "text-rose-400"
                     : "text-muted-foreground";
-            const isDesafio = slug === "desafio";
-
             const cardInner = (
               <article
                 className={`relative rounded-md border border-border bg-card overflow-hidden transition-colors ${
                   visual.href ? "hover:border-border-hi cursor-pointer" : ""
-                } ${isDesafio ? "opacity-70" : ""}`}
+                }`}
               >
                 <div className={`absolute inset-y-0 left-0 w-[3px] ${visual.rail}`} />
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_auto_auto_auto] items-center gap-6 pl-5 pr-5 py-5">
