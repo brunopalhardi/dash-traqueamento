@@ -3,9 +3,11 @@ import {
   getDailySeries,
   getKpis,
   getProductBreakdown,
+  rangeLastDays,
   rangeLastFullDays,
   rangePreviousPeriod,
 } from "@/lib/queries/dashboard";
+import { RefreshTodayButton } from "@/components/dashboard/refresh-today-button";
 import { ComboChart } from "@/components/dashboard/combo-chart";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { fmt } from "@/components/dashboard/format";
@@ -48,13 +50,15 @@ function deltaFromKpis(curr: number, prev: number) {
 export default async function GeralPage({
   searchParams,
 }: {
-  searchParams: Promise<{ range?: string }>;
+  searchParams: Promise<{ range?: string; hoje?: string }>;
 }) {
   const sp = await searchParams;
   const days = Math.max(1, Math.min(180, Number(sp.range ?? DEFAULT_DAYS)));
   // Dias COMPLETOS (termina ontem): o sync Meta nunca tem o dia corrente
   // fechado, e o "últimos 7 dias" do Gerenciador também termina ontem.
-  const range = rangeLastFullDays(days);
+  // ?hoje=1 (botão "atualizar hoje") inclui o dia corrente, parcial.
+  const includeToday = sp.hoje === "1";
+  const range = includeToday ? rangeLastDays(days) : rangeLastFullDays(days);
   const prevRange = rangePreviousPeriod(range);
 
   const [kpis, prevKpis, daily, breakdown] = await Promise.all([
@@ -85,8 +89,9 @@ export default async function GeralPage({
       <PageHeader
         eyebrow="geral · consolidado"
         title="Visão Geral"
-        subtitle={`últimos ${days} dias completos (até ontem) · investimento e ROAS consolidados de todos os produtos`}
+        subtitle={`últimos ${days} dias ${includeToday ? "· hoje parcial" : "completos (até ontem)"} · investimento e ROAS consolidados de todos os produtos`}
         rangeDays={DEFAULT_DAYS}
+        right={<RefreshTodayButton />}
       />
 
       <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">

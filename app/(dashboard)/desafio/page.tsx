@@ -17,6 +17,7 @@ import { getSendflowGroupSummary } from "@/lib/queries/sendflow";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BuyersTable } from "@/components/dashboard/buyers-table";
 import { ComparisonToggle } from "@/components/dashboard/comparison-toggle";
+import { RefreshTodayButton } from "@/components/dashboard/refresh-today-button";
 import { DailyBarChart, type DailyBarPoint } from "@/components/dashboard/daily-bar-chart";
 import { fmt } from "@/components/dashboard/format";
 import { SendflowGroupPanel } from "@/components/dashboard/sendflow-group-panel";
@@ -66,10 +67,10 @@ function deltaOf(curr: number, prev: number): { label: string; positive: boolean
 export default async function DesafioPage({
   searchParams,
 }: {
-  searchParams: Promise<{ preset?: string; cycle?: string; start?: string; end?: string; compare?: string }>;
+  searchParams: Promise<{ preset?: string; cycle?: string; start?: string; end?: string; compare?: string; hoje?: string }>;
 }) {
   const sp = await searchParams;
-  const { range: currentRange, label: rangeLabel } = parseRangeFromSearchParams(sp);
+  const { range: currentRange, label: rangeLabel, includeToday } = parseRangeFromSearchParams(sp);
   const compare = sp.compare === "1";
   const prevRange = rangePreviousCycle(currentRange);
 
@@ -107,7 +108,7 @@ export default async function DesafioPage({
   const prevCac = compare && prevPurchaseCount > 0 && prevKpis ? prevKpis.spend / prevPurchaseCount : 0;
   const prevRoas = compare && prevKpis && prevKpis.spend > 0 ? prevRevenueHot / prevKpis.spend : 0;
 
-  const subtitle = `${rangeLabel} · ${fmt.shortDate(currentRange.from)} → ${fmt.shortDate(currentRange.to)}`;
+  const subtitle = `${rangeLabel} · ${fmt.shortDate(currentRange.from)} → ${fmt.shortDate(currentRange.to)}${includeToday ? " · hoje parcial" : " · dados até ontem"}`;
 
   return (
     <>
@@ -117,6 +118,7 @@ export default async function DesafioPage({
         hidePicker
         right={
           <div className="flex items-center gap-2">
+            <RefreshTodayButton />
             <ComparisonToggle />
             <PeriodSelector />
           </div>

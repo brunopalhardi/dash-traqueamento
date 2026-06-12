@@ -178,10 +178,17 @@ export function parseRangeFromSearchParams(sp: {
   cycle?: string;
   start?: string;
   end?: string;
-}): { range: DateRange; label: string } {
+  hoje?: string;
+}): { range: DateRange; label: string; includeToday: boolean } {
   const result = parseRangeRaw(sp);
-  // Cap em ontem: o dia corrente nunca tem gasto Meta completo no banco.
-  return { range: capToYesterday(result.range), label: result.label };
+  // Cap em ontem por padrão: o dia corrente nunca tem gasto Meta completo no
+  // banco. ?hoje=1 (botão "atualizar hoje") inclui o dia corrente, parcial.
+  const includeToday = sp.hoje === "1";
+  return {
+    range: includeToday ? result.range : capToYesterday(result.range),
+    label: result.label,
+    includeToday,
+  };
 }
 
 function parseRangeRaw(sp: {
