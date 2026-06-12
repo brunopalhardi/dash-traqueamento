@@ -127,6 +127,42 @@ export async function getApprovedPurchaseRevenue(
   return Number(row?.cents ?? 0) / 100;
 }
 
+export interface RevenueSplit {
+  trafego: number;
+  organico: number;
+  semAtribuicao: number;
+}
+
+/** Receita aprovada (R$) por balde de atribuição no período (fuso BR). */
+export async function getRevenueSplit(
+  productSlug: ProductSlug,
+  range: DateRange,
+): Promise<RevenueSplit> {
+  const rows = await db
+    .select({
+      bucket: purchases.trafficSource,
+      cents: sql<number>`coalesce(sum(${purchases.valueCents}), 0)::int`,
+    })
+    .from(purchases)
+    .where(
+      and(
+        eq(purchases.productSlug, productSlug),
+        eq(purchases.status, "approved"),
+        inRangeBR(range),
+      ),
+    )
+    .groupBy(purchases.trafficSource);
+
+  const out: RevenueSplit = { trafego: 0, organico: 0, semAtribuicao: 0 };
+  for (const r of rows) {
+    const reais = Number(r.cents) / 100;
+    if (r.bucket === "trafego") out.trafego += reais;
+    else if (r.bucket === "organico") out.organico += reais;
+    else out.semAtribuicao += reais; // null (pré-backfill) também cai aqui
+  }
+  return out;
+}
+
 export interface InGroupStats {
   buyersWithPhone: number;
   inGroup: number;

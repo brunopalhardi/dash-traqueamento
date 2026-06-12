@@ -13,7 +13,7 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { fmt } from "@/components/dashboard/format";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PageHeader } from "@/components/dashboard/page-header";
-import { getApprovedPurchaseRevenue } from "@/lib/queries/purchases";
+import { getApprovedPurchaseRevenue, getRevenueSplit } from "@/lib/queries/purchases";
 import { PRODUCTS, type ProductSlug } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
@@ -81,6 +81,20 @@ export default async function GeralPage({
   const roasReal = kpis.spend > 0 ? revenueHot / kpis.spend : 0;
   const prevRoasReal = prevKpis.spend > 0 ? prevRevenueHot / prevKpis.spend : 0;
 
+  // Split de receita por balde de atribuição (tráfego/orgânico/sem atribuição)
+  const splitArr = await Promise.all(
+    salesProducts.map((p) => getRevenueSplit(p.slug, range)),
+  );
+  const split = splitArr.reduce(
+    (acc, s) => ({
+      trafego: acc.trafego + s.trafego,
+      organico: acc.organico + s.organico,
+      semAtribuicao: acc.semAtribuicao + s.semAtribuicao,
+    }),
+    { trafego: 0, organico: 0, semAtribuicao: 0 },
+  );
+  const roasTrafego = kpis.spend > 0 ? split.trafego / kpis.spend : 0;
+
   const hasData = daily.length > 0;
   const maxProductSpend = Math.max(...breakdown.map((b) => b.spend), 1);
 
@@ -94,7 +108,7 @@ export default async function GeralPage({
         right={<RefreshTodayButton />}
       />
 
-      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         <KpiCard
           label="Investimento"
           value={fmt.money(kpis.spend)}
@@ -105,7 +119,7 @@ export default async function GeralPage({
           label="Receita (Hotmart)"
           value={fmt.money(revenueHot)}
           delta={deltaFromKpis(revenueHot, prevRevenueHot)}
-          hint={`pixel meta: ${fmt.money(kpis.revenue)}`}
+          hint={`tráfego ${fmt.money(split.trafego)} · org ${fmt.money(split.organico)} · s/atrib ${fmt.money(split.semAtribuicao)}`}
         />
         <KpiCard
           label="ROAS"
@@ -121,6 +135,12 @@ export default async function GeralPage({
                   ? "bad"
                   : "neutral"
           }
+        />
+        <KpiCard
+          label="ROAS (tráfego)"
+          value={fmt.ratio(roasTrafego)}
+          hint={`receita de tráfego ÷ gasto Meta · ROAS total ${fmt.ratio(roasReal)}`}
+          tone={roasTrafego >= 2 ? "good" : roasTrafego >= 1 ? "warn" : roasTrafego > 0 ? "bad" : "neutral"}
         />
         <KpiCard
           label="Leads"

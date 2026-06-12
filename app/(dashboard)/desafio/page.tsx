@@ -12,6 +12,7 @@ import {
   getBuyersForCycle,
   getDailyPurchaseSeries,
   getInGroupStats,
+  getRevenueSplit,
 } from "@/lib/queries/purchases";
 import { getSendflowGroupSummary } from "@/lib/queries/sendflow";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,6 +80,7 @@ export default async function DesafioPage({
     purchaseCount, revenueHot, inGroup, dailyHot, dailyMeta,
     prevKpis, prevPurchaseCount, prevRevenueHot, prevDailyHot, prevDailyMeta,
     buyers,
+    split,
   ] = await Promise.all([
     getKpis("desafio", currentRange),
     getTopAds("desafio", currentRange, { limit: 5, orderBy: "cpa", onlyActive: true }),
@@ -94,6 +96,7 @@ export default async function DesafioPage({
     compare ? getDailyPurchaseSeries("desafio", prevRange) : Promise.resolve([]),
     compare ? getDailySeries("desafio", prevRange) : Promise.resolve([]),
     getBuyersForCycle("desafio", currentRange),
+    getRevenueSplit("desafio", currentRange),
   ]);
 
   const currentDaily = buildDailyPoints(currentRange, dailyHot, dailyMeta);
@@ -144,7 +147,7 @@ export default async function DesafioPage({
         <KpiCard
           label="Receita"
           value={fmt.money(revenueHot)}
-          hint={purchaseCount > 0 ? `TM ${fmt.money(revenueHot / purchaseCount)}` : undefined}
+          hint={`tráfego ${fmt.money(split.trafego)} · org ${fmt.money(split.organico)} · s/atrib ${fmt.money(split.semAtribuicao)}`}
           delta={compare ? deltaOf(revenueHot, prevRevenueHot) : null}
           icon={TrendingUp}
           accent="emerald"

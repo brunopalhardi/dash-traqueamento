@@ -9,6 +9,7 @@ import {
   getApprovedPurchaseRevenue,
   getBuyersForCycle,
   getDailyPurchaseSeries,
+  getRevenueSplit,
 } from "@/lib/queries/purchases";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ActiveToggle } from "@/components/dashboard/active-toggle";
@@ -91,6 +92,7 @@ export default async function GuiaPage({
     buyers,
     dailyFunnel, campaignFunnel, creativeFunnel, pageFunnel,
     videoPages, pageFunnelActive,
+    split,
   ] = await Promise.all([
     getKpis("guia", currentRange),
     getApprovedPurchaseCount("guia", currentRange),
@@ -109,6 +111,7 @@ export default async function GuiaPage({
     getPageFunnel("guia", currentRange, { onlyActive }),
     getActivePagesWithVideo("guia", currentRange),
     getPageFunnel("guia", currentRange, { onlyActive: true }),
+    getRevenueSplit("guia", currentRange),
   ]);
 
   // Junta vídeo (VTurb, por URL normalizada) com gasto/venda (Meta, pixel) das
@@ -192,6 +195,7 @@ export default async function GuiaPage({
           label="Receita"
           value={fmt.money(revenueHot)}
           delta={compare ? deltaOf(revenueHot, prevRevenueHot) : null}
+          hint={`tráfego ${fmt.money(split.trafego)} · org ${fmt.money(split.organico)} · s/atrib ${fmt.money(split.semAtribuicao)}`}
         />
         <KpiCard
           label="CAC"
