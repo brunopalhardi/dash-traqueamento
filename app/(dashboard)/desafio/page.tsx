@@ -147,7 +147,7 @@ export default async function DesafioPage({
         <KpiCard
           label="Receita"
           value={fmt.money(revenueHot)}
-          hint={`tráfego ${fmt.money(split.trafego)} · org ${fmt.money(split.organico)} · s/atrib ${fmt.money(split.semAtribuicao)}`}
+          hint={`tráfego ${fmt.money(split.trafego)} · org ${fmt.money(split.organico)} · s/atrib ${fmt.money(split.semAtribuicao)}${purchaseCount > 0 ? ` · TM ${fmt.money(revenueHot / purchaseCount)}` : ""}`}
           delta={compare ? deltaOf(revenueHot, prevRevenueHot) : null}
           icon={TrendingUp}
           accent="emerald"
