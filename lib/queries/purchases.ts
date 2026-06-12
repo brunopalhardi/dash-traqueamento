@@ -163,6 +163,30 @@ export async function getRevenueSplit(
   return out;
 }
 
+/** Receita Hotmart aprovada por NOME de campanha (match do c= do sck), upper-cased. */
+export async function getRevenueByCampaignName(
+  productSlug: ProductSlug,
+  range: DateRange,
+): Promise<Map<string, number>> {
+  const rows = await db
+    .select({
+      campaign: sql<string>`upper(${purchases.utmCampaign})`,
+      cents: sql<number>`coalesce(sum(${purchases.valueCents}), 0)::int`,
+    })
+    .from(purchases)
+    .where(
+      and(
+        eq(purchases.productSlug, productSlug),
+        eq(purchases.status, "approved"),
+        eq(purchases.trafficSource, "trafego"),
+        sql`${purchases.utmCampaign} is not null`,
+        inRangeBR(range),
+      ),
+    )
+    .groupBy(sql`upper(${purchases.utmCampaign})`);
+  return new Map(rows.map((r) => [r.campaign, Number(r.cents) / 100]));
+}
+
 export interface InGroupStats {
   buyersWithPhone: number;
   inGroup: number;

@@ -150,9 +150,17 @@ export function FunnelTableCampaign({ rows }: { rows: CampaignFunnelRow[] }) {
       lpv: acc.lpv + r.landingPageView,
       chkt: acc.chkt + r.initiateCheckout,
       purchase: acc.purchase + r.purchase,
+      hotRevenue: acc.hotRevenue + (r.hotRevenue ?? 0),
     }),
-    { impressions: 0, clicks: 0, linkClicks: 0, spend: 0, lpv: 0, chkt: 0, purchase: 0 },
+    { impressions: 0, clicks: 0, linkClicks: 0, spend: 0, lpv: 0, chkt: 0, purchase: 0, hotRevenue: 0 },
   );
+  const totRoasReal = tot.spend > 0 ? tot.hotRevenue / tot.spend : 0;
+  const totRoasRealText =
+    totRoasReal >= 1
+      ? "text-emerald-400"
+      : totRoasReal > 0
+        ? "text-rose-400"
+        : "text-muted-foreground";
 
   return (
     <div className="space-y-3">
@@ -166,6 +174,14 @@ export function FunnelTableCampaign({ rows }: { rows: CampaignFunnelRow[] }) {
         const t = cpaTone(cpa, r.spend);
         const tone = toneFor({ isBest, isWorst, isWarn, cpaTone: t });
         const spendBarPct = Math.min(100, (r.spend / maxSpend) * 100);
+        // ROAS real (receita Hotmart / gasto): verde ≥1, vermelho >0 e <1, neutro 0
+        const roasReal = r.roasReal ?? 0;
+        const roasRealText =
+          roasReal >= 1
+            ? "text-emerald-400"
+            : roasReal > 0
+              ? "text-rose-400"
+              : "text-muted-foreground";
 
         return (
           <article
@@ -230,6 +246,24 @@ export function FunnelTableCampaign({ rows }: { rows: CampaignFunnelRow[] }) {
                   </div>
                   <div className="font-mono font-medium tabular-nums text-3xl leading-none tracking-tight mt-1.5">
                     {fmt.money(r.spend)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
+                    Receita Hot
+                  </div>
+                  <div className="font-mono font-medium tabular-nums text-3xl leading-none tracking-tight mt-1.5">
+                    {fmt.money(r.hotRevenue ?? 0)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
+                    ROAS real
+                  </div>
+                  <div
+                    className={`font-mono font-medium tabular-nums text-3xl leading-none tracking-tight mt-1.5 ${roasRealText}`}
+                  >
+                    {fmt.ratio(r.roasReal ?? 0)}
                   </div>
                 </div>
               </div>
@@ -304,13 +338,31 @@ export function FunnelTableCampaign({ rows }: { rows: CampaignFunnelRow[] }) {
 
       {/* Totals strip */}
       <article className="rounded-md border border-border bg-card p-5">
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-8 gap-6">
           <div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
               Total Compras
             </div>
             <div className="font-mono font-medium tabular-nums text-xl leading-none tracking-tight mt-1.5">
               {fmt.int(tot.purchase)}
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
+              Receita Hot
+            </div>
+            <div className="font-mono font-medium tabular-nums text-xl leading-none tracking-tight mt-1.5">
+              {fmt.money(tot.hotRevenue)}
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
+              ROAS real
+            </div>
+            <div
+              className={`font-mono font-medium tabular-nums text-xl leading-none tracking-tight mt-1.5 ${totRoasRealText}`}
+            >
+              {fmt.ratio(totRoasReal)}
             </div>
           </div>
           <div>

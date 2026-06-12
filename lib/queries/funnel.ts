@@ -103,6 +103,10 @@ export interface CampaignFunnelRow {
   landingPageView: number;
   initiateCheckout: number;
   purchase: number;
+  /** Receita Hotmart atribuída à campanha (match por nome via sck). Preenchido na página. */
+  hotRevenue?: number;
+  /** ROAS real = hotRevenue / spend. Preenchido na página. */
+  roasReal?: number;
 }
 
 export async function getCampaignFunnel(
