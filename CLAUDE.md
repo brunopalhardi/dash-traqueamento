@@ -102,6 +102,10 @@ Dashboard focado em **Desafio + Guia**. Tudo de C1, Sono, Instagram e tracking-J
 - `utm_medium`: `Instagram` / `Whatsapp` / `01-Q`
 - `utm_content`: `Reels` / `AD10-IMG-DESAFIO`
 
+### Atribuição de venda orgânico vs pago (implementado 2026-06)
+
+Cada venda Hotmart é classificada em `purchases.traffic_source` = `trafego | organico | sem_atribuicao` pelo parser `lib/hotmart/tracking.ts` (lê o `sck`/`utm_*` do raw_payload). Dashboard mostra split de receita + ROAS de tráfego + ROAS por campanha (match `utm_campaign` ↔ `campaigns.name`). Captura: parâmetros de URL nos anúncios Meta (pago) + snippet `public/t.js` nas LPs (orgânico). Detalhes e template em `docs/tracking-utm.md`. Reprocessar histórico: `npx tsx --env-file=.env.local scripts/backfill-tracking.ts` (idempotente). Pendência: confirmar a fonte do sck atual via leitura de url_tags do Meta (bloqueado pela instabilidade do Meta em 2026-06-12).
+
 ### Convenção de nomes de campanha (Meta) → atribuição por produto
 
 A atribuição de **gasto/tráfego** a cada produto é por **conta Meta + regex no nome da campanha** (`namePattern` em `lib/products.ts`). ⚠️ **Mecanismo distinto** da atribuição de **venda/receita**, que é por **produto Hotmart** (`classifyPurchaseProduct`/`HOTMART_PRODUCTS`, ver "Stack ativa"). Não confundir: regex de campanha ≠ identidade de produto. (Bug histórico 2026-06-09: a classificação de venda usava substring `/guia/i` no nome do produto, varrendo ebook de Sono + Guia de Viagem pro `/guia` e inflando ROAS — corrigido pra id+nome exato.) Por isso a nomenclatura importa: se uma campanha não casa o regex, o gasto dela **some silenciosamente** do dashboard (mas a receita vem do Hotmart por `productSlug`, então fica descasado → ROAS fantasma). Convenção atual do Bruno:
