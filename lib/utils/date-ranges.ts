@@ -65,6 +65,20 @@ export function rangeLastFullDays(days: number, today = todayBR()): DateRange {
   return { from: addDays(yesterday, -(days - 1)), to: yesterday };
 }
 
+/**
+ * Limita o fim do range a ONTEM (fuso BR) — o dia corrente nunca tem gasto
+ * completo no banco (sync Meta usa presets last_Nd que excluem hoje). Capar
+ * deixa o rótulo honesto: "08→10 jun" em vez de "08→11" com o 11 vazio, e
+ * passa a reconciliar 1:1 com o Gerenciador setado no mesmo intervalo.
+ * Se o range inteiro for hoje (ex.: segunda de manhã), vira só ontem.
+ */
+export function capToYesterday(range: DateRange, today = todayBR()): DateRange {
+  const yesterday = addDays(today, -1);
+  const to = range.to > yesterday ? yesterday : range.to;
+  const from = range.from > to ? to : range.from;
+  return { from, to };
+}
+
 /** Período imediatamente anterior, de mesmo tamanho, sem overlap. */
 export function rangePreviousPeriod(range: DateRange): DateRange {
   const days = diffDays(range.from, range.to) + 1;
@@ -160,6 +174,17 @@ export function detectPreset(range: DateRange, today = todayBR()): PresetKey | n
  * Retorna a range + um label pra ser usado no header.
  */
 export function parseRangeFromSearchParams(sp: {
+  preset?: string;
+  cycle?: string;
+  start?: string;
+  end?: string;
+}): { range: DateRange; label: string } {
+  const result = parseRangeRaw(sp);
+  // Cap em ontem: o dia corrente nunca tem gasto Meta completo no banco.
+  return { range: capToYesterday(result.range), label: result.label };
+}
+
+function parseRangeRaw(sp: {
   preset?: string;
   cycle?: string;
   start?: string;

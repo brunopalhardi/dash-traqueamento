@@ -4,7 +4,9 @@ import {
   diffDays,
   rangeLastDays,
   rangeLastFullDays,
+  capToYesterday,
   rangePreviousPeriod,
+  parseRangeFromSearchParams,
 } from "./date-ranges";
 
 describe("addDays / diffDays", () => {
@@ -39,6 +41,43 @@ describe("rangeLastFullDays", () => {
   });
   it("cruza virada de mês", () => {
     expect(rangeLastFullDays(7, "2026-06-03")).toEqual({ from: "2026-05-27", to: "2026-06-02" });
+  });
+});
+
+describe("capToYesterday", () => {
+  it("corta o fim em ontem quando inclui hoje", () => {
+    expect(capToYesterday({ from: "2026-06-08", to: "2026-06-11" }, "2026-06-11")).toEqual({
+      from: "2026-06-08",
+      to: "2026-06-10",
+    });
+  });
+  it("range já terminando ontem fica intacto", () => {
+    expect(capToYesterday({ from: "2026-06-04", to: "2026-06-10" }, "2026-06-11")).toEqual({
+      from: "2026-06-04",
+      to: "2026-06-10",
+    });
+  });
+  it("range só de hoje (ex.: segunda) vira só ontem", () => {
+    expect(capToYesterday({ from: "2026-06-11", to: "2026-06-11" }, "2026-06-11")).toEqual({
+      from: "2026-06-10",
+      to: "2026-06-10",
+    });
+  });
+});
+
+describe("parseRangeFromSearchParams — cap em ontem", () => {
+  it("preset esta-semana nunca inclui hoje (reconcilia com Gerenciador)", () => {
+    // hoje = injetado via todayBR mockado? Não dá — então só garante que to < from+hoje.
+    // Verificação leve: o range retornado não pode ter to no futuro relativo ao parse.
+    const { range } = parseRangeFromSearchParams({ preset: "esta-semana" });
+    // to deve ser <= ontem; comparação textual ISO funciona
+    const today = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+    expect(range.to < today).toBe(true);
   });
 });
 
