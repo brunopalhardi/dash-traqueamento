@@ -52,5 +52,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // t.js é servido público (snippet de tracking instalado nas LPs externas) —
+  // não pode ser interceptado pelo redirect de login.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|t.js).*)"],
 };
