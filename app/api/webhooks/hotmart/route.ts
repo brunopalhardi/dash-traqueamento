@@ -99,6 +99,13 @@ export async function POST(req: NextRequest) {
       valueCents: parsed.valueCents,
       currency: parsed.currency,
       purchasedAt: parsed.purchasedAt,
+      trafficSource: parsed.trafficSource,
+      utmSource: parsed.utmSource,
+      utmMedium: parsed.utmMedium,
+      utmCampaign: parsed.utmCampaign,
+      utmContent: parsed.utmContent,
+      adExternalId: parsed.adExternalId,
+      trackingRaw: parsed.trackingRaw,
       rawPayload: raw as object,
       updatedAt: now,
     })
@@ -111,6 +118,14 @@ export async function POST(req: NextRequest) {
         buyerEmail: sql`coalesce(excluded.buyer_email, ${purchases.buyerEmail})`,
         buyerPhoneRaw: sql`coalesce(excluded.buyer_phone_raw, ${purchases.buyerPhoneRaw})`,
         buyerPhoneE164: sql`coalesce(excluded.buyer_phone_e164, ${purchases.buyerPhoneE164})`,
+        // Atribuição: reprocessar atualiza pra refletir reclassificação do tracking.
+        trafficSource: parsed.trafficSource,
+        utmSource: parsed.utmSource,
+        utmMedium: parsed.utmMedium,
+        utmCampaign: parsed.utmCampaign,
+        utmContent: parsed.utmContent,
+        adExternalId: parsed.adExternalId,
+        trackingRaw: parsed.trackingRaw,
         // raw_payload é sobrescrito de propósito: o último evento (refund/chargeback)
         // costuma ser mais relevante pra debug que o approved original.
         rawPayload: raw as object,

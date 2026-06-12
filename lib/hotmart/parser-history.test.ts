@@ -80,4 +80,35 @@ describe("parseSalesHistoryItem", () => {
     expect(parseSalesHistoryItem("string")).toBeNull();
     expect(parseSalesHistoryItem(42)).toBeNull();
   });
+
+  it("sem tracking no item → sem_atribuicao com utm_* nulos", () => {
+    const result = parseSalesHistoryItem(makeItem("APPROVED"));
+    expect(result!.trafficSource).toBe("sem_atribuicao");
+    expect(result!.utmSource).toBeNull();
+    expect(result!.trackingRaw).toBeNull();
+  });
+
+  it("extrai tracking de purchase.tracking.source_sck do histórico (pago)", () => {
+    // Shape do histórico: purchase.tracking.{source_sck,external_code} no item cru.
+    // Confirma que reextraímos do `item` e não do envelope sintético.
+    const result = parseSalesHistoryItem(
+      makeItem("APPROVED", {
+        purchase: {
+          transaction: "HP-HIST-1",
+          approved_date: 1735689600000,
+          status: "APPROVED",
+          price: { value: 197, currency_value: "BRL" },
+          tracking: {
+            source_sck: "s=MetaAds_OBA|m=Instagram|c=Desafio7D|co=Reels|t=pago",
+          },
+        },
+      }),
+    );
+    expect(result!.trafficSource).toBe("trafego");
+    expect(result!.utmSource).toBe("MetaAds_OBA");
+    expect(result!.utmCampaign).toBe("Desafio7D");
+    expect(result!.trackingRaw).toBe(
+      "s=MetaAds_OBA|m=Instagram|c=Desafio7D|co=Reels|t=pago",
+    );
+  });
 });

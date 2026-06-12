@@ -1,5 +1,6 @@
 import { normalizePhone } from "@/lib/utils/phone";
 import { classifyPurchaseProduct, type ProductSlug } from "@/lib/products";
+import { extractTracking, classifyTraffic } from "./tracking";
 
 export interface ParsedPurchase {
   event: "PURCHASE_APPROVED" | "PURCHASE_REFUNDED" | "PURCHASE_CHARGEBACK";
@@ -14,6 +15,13 @@ export interface ParsedPurchase {
   valueCents: number | null;
   currency: string | null;
   purchasedAt: Date;
+  trafficSource: "trafego" | "organico" | "sem_atribuicao";
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
+  utmContent: string | null;
+  adExternalId: string | null;
+  trackingRaw: string | null;
 }
 
 const EVENT_TO_STATUS = {
@@ -101,6 +109,13 @@ export function parsePurchasePayload(raw: unknown): ParsedPurchase | null {
     ]),
   );
 
+  // Webhook: raw = body completo, com data.purchase.origin.{sck,xcod}.
+  // No caminho do histórico, parseSalesHistoryItem reescreve estes campos a
+  // partir do item cru (ver parser-history.ts), porque o envelope sintético
+  // não bate o shape esperado pelo extractTracking.
+  const tracking = extractTracking(raw);
+  const trafficSource = classifyTraffic(tracking);
+
   return {
     event,
     status: EVENT_TO_STATUS[event],
@@ -114,5 +129,12 @@ export function parsePurchasePayload(raw: unknown): ParsedPurchase | null {
     valueCents: valueCents != null && Number.isFinite(valueCents) ? valueCents : null,
     currency,
     purchasedAt,
+    trafficSource,
+    utmSource: tracking.utmSource,
+    utmMedium: tracking.utmMedium,
+    utmCampaign: tracking.utmCampaign,
+    utmContent: tracking.utmContent,
+    adExternalId: tracking.adExternalId,
+    trackingRaw: tracking.trackingRaw,
   };
 }

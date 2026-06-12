@@ -112,4 +112,36 @@ describe("parsePurchasePayload", () => {
     });
     expect(result!.productSlug).toBe("outros");
   });
+
+  it("sem tracking no payload → sem_atribuicao com utm_* nulos", () => {
+    const result = parsePurchasePayload(samplePayload);
+    expect(result!.trafficSource).toBe("sem_atribuicao");
+    expect(result!.utmSource).toBeNull();
+    expect(result!.utmMedium).toBeNull();
+    expect(result!.utmCampaign).toBeNull();
+    expect(result!.utmContent).toBeNull();
+    expect(result!.adExternalId).toBeNull();
+    expect(result!.trackingRaw).toBeNull();
+  });
+
+  it("extrai tracking de origin.sck do webhook (pago)", () => {
+    const result = parsePurchasePayload({
+      ...samplePayload,
+      data: {
+        ...samplePayload.data,
+        purchase: {
+          ...samplePayload.data.purchase,
+          origin: { sck: "s=MetaAds_OBA|m=Instagram|c=Desafio7D|co=Reels|t=pago" },
+        },
+      },
+    });
+    expect(result!.trafficSource).toBe("trafego");
+    expect(result!.utmSource).toBe("MetaAds_OBA");
+    expect(result!.utmMedium).toBe("Instagram");
+    expect(result!.utmCampaign).toBe("Desafio7D");
+    expect(result!.utmContent).toBe("Reels");
+    expect(result!.trackingRaw).toBe(
+      "s=MetaAds_OBA|m=Instagram|c=Desafio7D|co=Reels|t=pago",
+    );
+  });
 });
